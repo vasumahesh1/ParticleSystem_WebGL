@@ -1,0 +1,8 @@
+{
+  "uvScale": 0.25,
+  "components": [{
+    "name": "Wahoo",
+    "url": "./src/objs/wahoo.obj",
+    "meshMode": "COLOR"
+  }]
+}
