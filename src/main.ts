@@ -16,6 +16,7 @@ import { setGL } from './globals';
 import { ShaderControls, WaterControls } from './rendering/gl/ShaderControls';
 import ShaderProgram, { Shader } from './rendering/gl/ShaderProgram';
 import AssetLibrary from './core/utils/AssetLibrary';
+import PointLight from './core/lights/PointLight';
 
 var sceneComponents = require('./config/scene_comps.json');
 
@@ -65,6 +66,8 @@ let frameCount: number = 0;
 
 let shouldCapture: boolean = false;
 
+let testLight: PointLight;
+
 function createStaticScene() {
   let roomWidth = 20;
   let roomLength = 50;
@@ -89,7 +92,16 @@ function createStaticScene() {
     for (var j = -roomWidth / 2.0; j < roomWidth / 2.0; ++j) {
       meshInstances.Roof1.addInstance(vec4.fromValues(j + 0.5, roomHeight, -i - 0.5, 1), vec4.fromValues(0.7071068, 0, 0, 0.7071068), vec3.fromValues(1,1,1));
     }
-   } 
+   }
+
+   testLight = new PointLight();
+   testLight.ambient = vec4.fromValues(0.0, 0.0, 0.0, 1);
+   testLight.diffuse = vec4.fromValues(15, 15, 15, 1);
+   testLight.specular = vec4.fromValues(5.0, 5.0, 5.0, 1);
+
+   testLight.position = vec3.fromValues(0, 1, -15);
+   testLight.range = 5;
+   testLight.attn = vec3.fromValues(1, 1, 10);
 }
 
 /**
@@ -418,7 +430,7 @@ function main() {
   const camera = new Camera(vec3.fromValues(0.5, 3, -2), vec3.fromValues(0.5, 3, -10));
 
   const renderer = new OpenGLRenderer(canvas);
-  renderer.setClearColor(0.05, 0.05, 0.05, 1);
+  renderer.setClearColor(0.0, 0.0, 0.0, 1);
   gl.enable(gl.DEPTH_TEST);
 
   mainShader = new ShaderProgram([
@@ -511,6 +523,8 @@ function main() {
 
     mainShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
     regularShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
+
+    mainShader.setPointLights([testLight]); 
 
     // mainShader.setShadowTexture(1);
     // regularShader.setShadowTexture(1);

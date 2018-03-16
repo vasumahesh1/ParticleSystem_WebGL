@@ -2,6 +2,7 @@ import { vec4, mat4, vec2, vec3 } from 'gl-matrix';
 import Drawable from './Drawable';
 import { gl } from '../../globals';
 import { ShaderControls, WaterControls } from './ShaderControls';
+import PointLight from '../../core/lights/PointLight';
 
 var activeProgram: WebGLProgram = null;
 
@@ -30,6 +31,8 @@ export class Shader {
     }
   }
 };
+
+const MAX_POINT_LIGHTS: number = 50;
 
 class ShaderProgram {
   prog: WebGLProgram;
@@ -60,11 +63,11 @@ class ShaderProgram {
   unifSMLightViewport: WebGLUniformLocation;
   unifShadowTexture: WebGLUniformLocation;
   unifLightPos: WebGLUniformLocation;
+  unifNumPointLights: WebGLUniformLocation;
 
   unifControlsWaterOpacity: WebGLUniformLocation;
   unifControlsWaterColor: WebGLUniformLocation;
   unifControlsWaterLevel: WebGLUniformLocation;
-
 
   unifControlsWaterBedrock1Color: WebGLUniformLocation;
   unifControlsWaterBedrock2Color: WebGLUniformLocation;
@@ -73,6 +76,8 @@ class ShaderProgram {
   unifControlsElevation: WebGLUniformLocation;
   unifControlsNoiseScale: WebGLUniformLocation;
   unifGlobalTransform: WebGLUniformLocation;
+
+  unifPointLights: Array<any>;
 
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
@@ -113,6 +118,12 @@ class ShaderProgram {
     this.unifSMLightViewport = gl.getUniformLocation(this.prog, "u_LightViewportMatrix");
     this.unifShadowTexture = gl.getUniformLocation(this.prog, "u_ShadowTexture");
     this.unifGlobalTransform = gl.getUniformLocation(this.prog, "u_GlobalTransform");
+
+
+    this.unifNumPointLights = gl.getUniformLocation(this.prog, "u_NumPointLights");
+    this.unifPointLights = new Array<any>();
+
+    PointLight.markLocations(this.prog, this.unifPointLights, MAX_POINT_LIGHTS, "u_PointLights");
   }
 
   use() {
@@ -205,6 +216,19 @@ class ShaderProgram {
 
     //   gl.uniformMatrix4fv(this.unifInstanceModelInvTranspose, false, invertData);
     // }
+  }
+
+  setPointLights(lights: Array<PointLight>) {
+    this.use();
+
+    if (this.unifNumPointLights !== -1) {
+      gl.uniform1ui(this.unifNumPointLights, lights.length);
+
+      for (var itr = 0; itr < lights.length; ++itr) {
+        let light = lights[itr];
+        light.setPointLightData(this.unifPointLights[itr]);
+      }
+    }
   }
 
   /**
