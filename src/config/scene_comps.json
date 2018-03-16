@@ -1,10 +1,6 @@
 {
   "uvScale": 0.25,
   "components": [{
-    "name": "Wahoo",
-    "url": "./src/objs/wahoo.obj",
-    "meshMode": "COLOR"
-  }, {
     "name": "StoneWall",
     "url": "./src/objs/SquarePlane.obj",
     "meshMode": "UV",
@@ -29,5 +25,10 @@
     "url": "./src/objs/Torch1.obj",
     "meshMode": "UV",
     "uvOffset": [0, 1]
+  }, {
+    "name": "Torch2",
+    "url": "./src/objs/Torch2.obj",
+    "meshMode": "UV",
+    "uvOffset": [1, 1]
   }]
 }

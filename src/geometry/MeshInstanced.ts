@@ -121,6 +121,7 @@ class MeshInstanced extends Drawable {
     dCreate("Loading Vertices: " + vertexCount);
     dCreate("Loading Indices: " + indices.length);
     dCreate("Loading Normals: " + vertexNormals.length);
+    dCreate("Loading This: ", this);
 
     let colorArr =  new Float32Array([
       this.baseColor[0],

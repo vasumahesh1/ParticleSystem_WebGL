@@ -17,13 +17,15 @@ import { ShaderControls, WaterControls } from './rendering/gl/ShaderControls';
 import ShaderProgram, { Shader } from './rendering/gl/ShaderProgram';
 import AssetLibrary from './core/utils/AssetLibrary';
 import PointLight from './core/lights/PointLight';
+import { Torch, BasicTorch } from './particlesystem/Torch';
 
 var sceneComponents = require('./config/scene_comps.json');
+var sceneTorches = require('./config/torches.json');
 
 localStorage.debug = 'mainApp:*:info*,mainApp:*:error*'; // ,mainApp:*:trace*';
 
 var Logger = require('debug');
-var logTrace = Logger("mainApp:main:trace");
+var logTrace = Logger("mainApp:main:info");
 var logError = Logger("mainApp:main:error");
 
 let meshInstances: { [symbol: string]: MeshInstanced; } = { };
@@ -33,6 +35,10 @@ let meshInstances: { [symbol: string]: MeshInstanced; } = { };
 let controls = {
   saveImage: saveImage,
   lightDirection: [15, 15, 15]
+};
+
+let torchImpl: any = {
+  BasicTorch: BasicTorch
 };
 
 const SM_VIEWPORT_TRANSFORM:mat4 = mat4.fromValues(
@@ -66,7 +72,8 @@ let frameCount: number = 0;
 
 let shouldCapture: boolean = false;
 
-let testLight: PointLight;
+let torches: Array<any>;
+let sceneLights: Array<PointLight>;
 
 function createStaticScene() {
   let roomWidth = 20;
@@ -94,14 +101,25 @@ function createStaticScene() {
     }
    }
 
-   testLight = new PointLight();
-   testLight.ambient = vec4.fromValues(0.0, 0.0, 0.0, 1);
-   testLight.diffuse = vec4.fromValues(15, 15, 15, 1);
-   testLight.specular = vec4.fromValues(5.0, 5.0, 5.0, 1);
+   torches = [];
+   sceneLights = new Array<PointLight>();
 
-   testLight.position = vec3.fromValues(0, 1, -15);
-   testLight.range = 5;
-   testLight.attn = vec3.fromValues(1, 1, 10);
+   for (var itr = 0; itr < sceneTorches.data.length; ++itr) {
+     let torchData = sceneTorches.data[itr];
+     let constructor = torchImpl[torchData["impl"]];
+
+     let pos = vec4.fromValues(torchData.position[0], torchData.position[1], torchData.position[2], 1);
+     let orient = vec4.fromValues(torchData.orient[0], torchData.orient[1], torchData.orient[2], torchData.orient[3]);
+     let torch = new constructor(pos, orient);
+
+     meshInstances[torchData.instance].addInstance(pos, orient, vec3.fromValues(1,1,1));
+
+     for (var j = 0; j < torch.lights.length; ++j) {
+       sceneLights.push(torch.lights[j]);
+     }
+
+     torches.push(torch);
+   }
 }
 
 /**
@@ -524,7 +542,7 @@ function main() {
     mainShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
     regularShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
 
-    mainShader.setPointLights([testLight]); 
+    mainShader.setPointLights(sceneLights); 
 
     // mainShader.setShadowTexture(1);
     // regularShader.setShadowTexture(1);

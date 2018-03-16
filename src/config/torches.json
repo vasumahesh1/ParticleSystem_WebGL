@@ -1,0 +1,11 @@
+{
+  "data": [{
+    "position": [0, 0, -7],
+    "orient": [0, 0, 0, 1],
+    "impl": "BasicTorch",
+    "instance": "Torch1",
+    "options": {
+
+    }
+  }]
+}

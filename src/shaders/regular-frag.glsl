@@ -38,7 +38,11 @@ vec4 calculatePointLightContribution(vec4 inputColor, vec3 normal) {
     return inputColor;
   }
 
+  float alpha = inputColor.a;
+
   vec4 ambient, diffuse, spec;
+
+  vec4 totalLightContrib = vec4(0, 0, 0, 0);
 
   for (uint i = uint(0); i < u_NumPointLights; i++) {
     PointLight light = u_PointLights[i];
@@ -55,8 +59,10 @@ vec4 calculatePointLightContribution(vec4 inputColor, vec3 normal) {
     float d = length(lightVec);
   
     // Range test.
-    if( d > light.range )
+    if( d > light.range ) {
+      totalLightContrib += ambient;
       continue;
+    }
     
     // Normalize the light vector.
     lightVec /= d; 
@@ -73,20 +79,24 @@ vec4 calculatePointLightContribution(vec4 inputColor, vec3 normal) {
     if( diffuseTerm > 0.0f )
     {
       vec3 v         = reflect(-lightVec, normal);
-      float specFactor = pow(max(dot(v, vec3(u_Eye)), 0.0f), 128.0); // TODO: Material
+      float specFactor = pow(max(dot(v, normalize(vec3(u_Eye))), 0.0f), 128.0); // TODO: Material
             
       diffuse = diffuseTerm * light.diffuse;
       spec    = specFactor * light.specular;
     }
 
     // Attenuate
-    float att = 1.0f / dot(light.attn, vec3(1.0f, d, d*d));
+    float att = 1.0f / dot(light.attn, vec3(1.0f, d, d * d));
 
     diffuse *= att;
     spec    *= att;
 
-    inputColor = inputColor + (diffuse + spec + ambient);
+    totalLightContrib += (diffuse + spec + ambient);
   }
+
+  inputColor = inputColor * totalLightContrib;
+
+  inputColor.a = alpha;
 
   // TODO: Material alhpa
 

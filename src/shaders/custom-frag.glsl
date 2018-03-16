@@ -59,10 +59,10 @@ vec4 calculatePointLightContribution(vec4 inputColor, vec3 normal) {
     float d = length(lightVec);
   
     // Range test.
-    if( d > light.range ) {
-      totalLightContrib += ambient;
-      continue;
-    }
+    // if( d > light.range ) {
+    //   totalLightContrib += ambient;
+    //   continue;
+    // }
     
     // Normalize the light vector.
     lightVec /= d; 
