@@ -65,6 +65,32 @@ let frameCount: number = 0;
 
 let shouldCapture: boolean = false;
 
+function createStaticScene() {
+  let roomWidth = 20;
+  let roomLength = 50;
+  let roomHeight = 5;
+  let middleWidth = 5; // odd
+
+  for (var i = 0; i < roomLength; ++i) {
+    for (var j = 0; j < roomHeight; ++j) {
+      meshInstances.StoneWall.addInstance(vec4.fromValues(-roomWidth / 2.0, j + 0.5, -i - 0.5, 1), vec4.fromValues(0, 0.7071068, 0, 0.7071068), vec3.fromValues(1,1,1));
+      meshInstances.StoneWall.addInstance(vec4.fromValues(roomWidth / 2.0, j + 0.5, -i - 0.5, 1), vec4.fromValues(0, 0.7071068, 0, 0.7071068), vec3.fromValues(1,1,1));
+    }
+
+    for (var j = -roomWidth / 2.0; j < roomWidth / 2.0; ++j) {
+      if (j < middleWidth / 2 && j > -middleWidth / 2) {
+        meshInstances.Floor2.addInstance(vec4.fromValues(j + 0.5, 0, -i - 0.5, 1), vec4.fromValues(-0.7071068, 0, 0, 0.7071068), vec3.fromValues(1,1,1));
+        continue;
+      }
+      // -90 X
+      meshInstances.Floor1.addInstance(vec4.fromValues(j + 0.5, 0, -i - 0.5, 1), vec4.fromValues(-0.7071068, 0, 0, 0.7071068), vec3.fromValues(1,1,1));
+    }
+
+    for (var j = -roomWidth / 2.0; j < roomWidth / 2.0; ++j) {
+      meshInstances.Roof1.addInstance(vec4.fromValues(j + 0.5, roomHeight, -i - 0.5, 1), vec4.fromValues(0.7071068, 0, 0, 0.7071068), vec3.fromValues(1,1,1));
+    }
+   } 
+}
 
 /**
  * @brief      Loads the geometry assets
@@ -83,8 +109,8 @@ function loadAssets(callback?: any) {
     sky.destory();
   }
 
-  plane = new NoisePlane(2000, 2000, 2, 2, 8123);
-  plane.create();
+  // plane = new NoisePlane(2000, 2000, 2, 2, 8123);
+  // plane.create();
 
   boundingLines = new Line();
   mainAtlas = new Texture('./psd/texture_atlas.png');
@@ -128,7 +154,8 @@ function loadAssets(callback?: any) {
         meshInstances[comp.name].uvScale = uvScale;
       }
 
-      meshInstances["Wahoo"].addInstance(vec4.fromValues(0,5.0,0,1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1));
+      createStaticScene();
+      // meshInstances["Wahoo"].addInstance(vec4.fromValues(0,5.0,0,1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1));
 
       logTrace('Loaded MeshInstances are:', meshInstances);
 
@@ -388,7 +415,7 @@ function main() {
 
   // Initial call to load scene
 
-  const camera = new Camera(vec3.fromValues(75, 75, 75), vec3.fromValues(0, 0, 0));
+  const camera = new Camera(vec3.fromValues(0.5, 3, -2), vec3.fromValues(0.5, 3, -10));
 
   const renderer = new OpenGLRenderer(canvas);
   renderer.setClearColor(0.05, 0.05, 0.05, 1);
@@ -466,13 +493,13 @@ function main() {
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
     renderer.clear();
 
-    gl.disable(gl.DEPTH_TEST);
+    // gl.disable(gl.DEPTH_TEST);
 
-    skyShader.setTime(frameCount);
-    skyShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
-    renderer.render(camera, skyShader, [sky]);
+    // skyShader.setTime(frameCount);
+    // skyShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
+    // renderer.render(camera, skyShader, [sky]);
 
-    gl.enable(gl.DEPTH_TEST);
+    // gl.enable(gl.DEPTH_TEST);
 
     mainShader.setTime(frameCount);
     mainShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));

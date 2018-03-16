@@ -1,0 +1,210 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 375.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"Insta",
+				"Package Control: Install Package"
+			],
+			[
+				"Install",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 410.0
+	},
+	"console":
+	{
+		"height": 130.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '6f4c264a24d933ce70df5dedcf1dcaee' + 'ebe013ee18cced0ef93d5f746d80ef60'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/P/[CG]WebGL/ParticleSystem_WebGL"
+	],
+	"file_history":
+	[
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/objs/Torch1.obj",
+		"/P/[DESIGN]Maya/ParticleSystem/objs/Torch1.mtl",
+		"/P/[GAME]Engine/tools/src/common.h",
+		"/P/[GAME]Engine/azura_v2_backup/Azura/stdafx.h",
+		"/P/[GAME]Engine/tools/test/CMakeLists.txt",
+		"/D/Chrome/optimized-ggx.hlsl",
+		"/P/[GAME]Engine/tools/.gitignore",
+		"/P/[GAME]Engine/tools/test/StackAllocator_test.cpp",
+		"/P/[GAME]Engine/tools/test/GTest.CMakeLists.txt.in",
+		"/P/[GAME]Engine/tools/src/common.h.in",
+		"/P/ubuntu/PeepSim/Projects/src/CMakeLists.txt",
+		"/P/ubuntu/PeepSim/Projects/CMakeLists.txt",
+		"/P/ubuntu/PeepSim/Tests/CMakeLists.txt",
+		"/P/ubuntu/PeepSim/CMakeLists.txt",
+		"/P/ubuntu/PeepSim/Test/CMakeLists.txt",
+		"/P/ubuntu/PeepSim/CMakeLists.txt.in",
+		"/P/ubuntu/PeepSim/Makefile",
+		"/P/ubuntu/PeepSim/Projects/src/components/Agents.cpp",
+		"/P/ubuntu/PeepSim/Projects/src/constraints/FrictionalConstraint.cpp",
+		"/P/[GAME] Engine/tools/README.md",
+		"/P/[GAME] Engine/tools/common.h",
+		"/P/[GAME] Engine/tools/StackAllocator.h",
+		"/D/Chrome/molokai.vim",
+		"/P/[GAME] Engine/tools/StackAllocator.cpp",
+		"/P/[GAME] Engine/tools/libs/UnitTest++/UnitTestPP.h",
+		"/P/[GAME] Engine/tools/libs/UnitTest++/UnitTest++.h",
+		"/D/Chrome/vimrc"
+	],
+	"find":
+	{
+		"height": 23.0
+	},
+	"find_in_files":
+	{
+		"height": 96.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"folders":
+	[
+		{
+			"path": "P:\\[CG]WebGL\\ParticleSystem_WebGL"
+		}
+	],
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 392.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
