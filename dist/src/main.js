@@ -1,71 +1,93 @@
-import { vec3, vec4, mat4, glMatrix } from 'gl-matrix';
+import { vec2, vec3, vec4, mat4, glMatrix } from 'gl-matrix';
 import * as Stats from 'stats-js';
 import * as DAT from 'dat-gui';
 import Line from './geometry/Line';
-import NoisePlane from './geometry/NoisePlane';
+import MeshInstanced from './geometry/MeshInstanced';
 import Sky from './geometry/Sky';
 import OpenGLRenderer from './rendering/gl/OpenGLRenderer';
+import Texture from './rendering/gl/Texture';
 import Camera from './Camera';
 import { setGL } from './globals';
 import { ShaderControls } from './rendering/gl/ShaderControls';
 import ShaderProgram, { Shader } from './rendering/gl/ShaderProgram';
-import Building from './core/shape_grammer/Building';
-localStorage.debug = 'lsystem:info*,lsystem:error*';
-window.Building = Building;
+import AssetLibrary from './core/utils/AssetLibrary';
+import { BasicTorch } from './particlesystem/Torch';
+var sceneComponents = require('./config/scene_comps.json');
+var sceneTorches = require('./config/torches.json');
+localStorage.debug = 'mainApp:*:info*,mainApp:*:error*'; // ,mainApp:*:trace*';
+var Logger = require('debug');
+var logTrace = Logger("mainApp:main:info");
+var logError = Logger("mainApp:main:error");
+let meshInstances = {};
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
 let controls = {
-    createButton: loadAssets,
-    toggleCollisionButton: toggleCollision,
-    toggleLeavesButton: toggleLeaves,
     saveImage: saveImage,
-    axiom: "[F][/-F][*+F][++*F][--*F]",
-    seed: 858.739,
-    iterations: 4,
-    lightDirection: [15, 15, 15],
-    influencers: {
-        sunlight: 0.0,
-        gravity: 5.0,
-        collisionCheck: true
-    },
-    constraints: {
-        minCollisionDistance: 0.015,
-        rotateTilt: 20,
-        rotateSwirl: 45,
-        rotateSNoise: 5,
-        rotateTNoise: 5,
-    }
+    lightDirection: [15, 15, 15]
+};
+let torchImpl = {
+    BasicTorch: BasicTorch
 };
 const SM_VIEWPORT_TRANSFORM = mat4.fromValues(0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0);
-const LEAF_COLOR_GRADIENT = [
-    [97, 130, 47, 255],
-    [111, 140, 7, 255],
-    [242, 206, 22, 255],
-    [242, 164, 19, 255],
-    [242, 79, 19, 255]
-];
 let prevTime;
-let degreePerMS = -5.0 / 1000.0;
+let FlagIsRenderable = false;
 let boundingLines;
 let sky;
 let plane;
 let shaderControls;
-let testBuilding;
-let mainShader;
+let mainAtlas;
+let assetLibrary;
+let mainShader; // Instanced
+let regularShader; // Not Instanced
 let skyShader;
 let visualShader;
 let shadowMapShader;
 let frameCount = 0;
 let shouldCapture = false;
-let drawOnlyCollisions = false;
-let drawLeaves = true;
-function toggleLeaves() {
-    drawLeaves = !drawLeaves;
+let torches;
+let sceneLights;
+function createStaticScene() {
+    let roomWidth = 20;
+    let roomLength = 50;
+    let roomHeight = 5;
+    let middleWidth = 5; // odd
+    for (var i = 0; i < roomLength; ++i) {
+        for (var j = 0; j < roomHeight; ++j) {
+            meshInstances.StoneWall.addInstance(vec4.fromValues(-roomWidth / 2.0, j + 0.5, -i - 0.5, 1), vec4.fromValues(0, 0.7071068, 0, 0.7071068), vec3.fromValues(1, 1, 1));
+            meshInstances.StoneWall.addInstance(vec4.fromValues(roomWidth / 2.0, j + 0.5, -i - 0.5, 1), vec4.fromValues(0, 0.7071068, 0, 0.7071068), vec3.fromValues(1, 1, 1));
+        }
+        for (var j = -roomWidth / 2.0; j < roomWidth / 2.0; ++j) {
+            if (j < middleWidth / 2 && j > -middleWidth / 2) {
+                meshInstances.Floor2.addInstance(vec4.fromValues(j + 0.5, 0, -i - 0.5, 1), vec4.fromValues(-0.7071068, 0, 0, 0.7071068), vec3.fromValues(1, 1, 1));
+                continue;
+            }
+            // -90 X
+            meshInstances.Floor1.addInstance(vec4.fromValues(j + 0.5, 0, -i - 0.5, 1), vec4.fromValues(-0.7071068, 0, 0, 0.7071068), vec3.fromValues(1, 1, 1));
+        }
+        for (var j = -roomWidth / 2.0; j < roomWidth / 2.0; ++j) {
+            meshInstances.Roof1.addInstance(vec4.fromValues(j + 0.5, roomHeight, -i - 0.5, 1), vec4.fromValues(0.7071068, 0, 0, 0.7071068), vec3.fromValues(1, 1, 1));
+        }
+    }
+    torches = [];
+    sceneLights = new Array();
+    for (var itr = 0; itr < sceneTorches.data.length; ++itr) {
+        let torchData = sceneTorches.data[itr];
+        let constructor = torchImpl[torchData["impl"]];
+        let pos = vec4.fromValues(torchData.position[0], torchData.position[1], torchData.position[2], 1);
+        let orient = vec4.fromValues(torchData.orient[0], torchData.orient[1], torchData.orient[2], torchData.orient[3]);
+        let torch = new constructor(pos, orient);
+        meshInstances[torchData.instance].addInstance(pos, orient, vec3.fromValues(1, 1, 1));
+        for (var j = 0; j < torch.lights.length; ++j) {
+            sceneLights.push(torch.lights[j]);
+        }
+        torches.push(torch);
+    }
 }
 /**
  * @brief      Loads the geometry assets
  */
-function loadAssets() {
+function loadAssets(callback) {
+    FlagIsRenderable = false;
     if (boundingLines) {
         boundingLines.destory();
     }
@@ -75,22 +97,57 @@ function loadAssets() {
     if (sky) {
         sky.destory();
     }
-    plane = new NoisePlane(500, 500, 75, 75, 8234.738169);
-    plane.create();
+    // plane = new NoisePlane(2000, 2000, 2, 2, 8123);
+    // plane.create();
     boundingLines = new Line();
+    mainAtlas = new Texture('./psd/texture_atlas.png');
     // Enable for Debug
     boundingLines.linesArray.push(vec4.fromValues(0, 0, 0, 1.0));
     boundingLines.linesArray.push(vec4.fromValues(30, 0, 0, 1.0));
     boundingLines.linesArray.push(vec4.fromValues(0, 0, 0, 1.0));
     boundingLines.linesArray.push(vec4.fromValues(0, 0, 30, 1.0));
+    boundingLines.linesArray.push(vec4.fromValues(0, 0, 0, 1.0));
+    boundingLines.linesArray.push(vec4.fromValues(0, 30, 0, 1.0));
     sky = new Sky(vec3.fromValues(0, 0, 0));
     sky.create();
+    assetLibrary = new AssetLibrary();
+    window.AssetLibrary = assetLibrary;
+    let assets = {};
+    for (let itr = 0; itr < sceneComponents.components.length; ++itr) {
+        let comp = sceneComponents.components[itr];
+        assets[comp.name] = comp.url;
+    }
+    assetLibrary.load(assets)
+        .then(function () {
+        logTrace('Loaded Asssets', assetLibrary);
+        let uvScale = sceneComponents.uvScale;
+        for (let itr = 0; itr < sceneComponents.components.length; ++itr) {
+            let comp = sceneComponents.components[itr];
+            meshInstances[comp.name] = new MeshInstanced(comp.name);
+            meshInstances[comp.name].rawMesh = assetLibrary.meshes[comp.name];
+            if (comp.uvOffset) {
+                meshInstances[comp.name].uvOffset = vec2.fromValues(comp.uvOffset[0] * uvScale, comp.uvOffset[1] * uvScale);
+            }
+            meshInstances[comp.name].uvScale = uvScale;
+        }
+        createStaticScene();
+        // meshInstances["Wahoo"].addInstance(vec4.fromValues(0,5.0,0,1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1));
+        logTrace('Loaded MeshInstances are:', meshInstances);
+        for (let key in meshInstances) {
+            meshInstances[key].create();
+        }
+        boundingLines.create();
+        FlagIsRenderable = true;
+        if (callback) {
+            callback();
+        }
+    })
+        .catch(function (err) {
+        logError('Asset Library Loading Error', err);
+    });
 }
 function saveImage() {
     shouldCapture = true;
-}
-function toggleCollision() {
-    drawOnlyCollisions = !drawOnlyCollisions;
 }
 function downloadImage() {
     // Dump the canvas contents to a file.
@@ -107,31 +164,6 @@ function constructGUI() {
     // Add controls to the gui
     const gui = new DAT.GUI();
     gui.add(controls, 'saveImage').name('Save Image');
-    gui.add(controls, 'toggleCollisionButton').name('Toggle Collision View');
-    gui.add(controls, 'toggleLeavesButton').name('Toggle Leaves');
-    gui.add(controls, 'iterations', 1, 10).step(1.0).name('Iterations').listen();
-    gui.add(controls, 'seed', 0, 32767).step(0.05).name('Seed').listen();
-    gui.add(controls, 'axiom').name('Axiom');
-    let group = gui.addFolder('Environment Influencers');
-    group.add(controls.influencers, 'gravity', 0, 30).step(1.0).name('Gravity Factor').listen();
-    group.add(controls.influencers, 'sunlight', 0, 2).step(0.1).name('Sunlight Bend Factor').listen();
-    group.add(controls.lightDirection, '0', -20, 20).step(1.0).name('Light X').listen();
-    group.add(controls.lightDirection, '1', -20, 20).step(1.0).name('Light Y').listen();
-    group.add(controls.lightDirection, '2', -20, 20).step(1.0).name('Light Z').listen();
-    group = gui.addFolder('Constraints');
-    group.add(controls.constraints, 'minCollisionDistance', 0, 0.05).step(0.005).name('minBranchCollisionDistance').listen();
-    group.add(controls.constraints, 'rotateSwirl', 0, 90).step(1.0).name('Swirl Rotate').listen();
-    group.add(controls.constraints, 'rotateTilt', 0, 90).step(1.0).name('Tilt Rotate').listen();
-    group.add(controls.constraints, 'rotateTNoise', 0, 20).step(1.0).name('Tilt Noise').listen();
-    group.add(controls.constraints, 'rotateSNoise', 0, 20).step(1.0).name('Swirl Noise').listen();
-    group.add(controls.influencers, 'collisionCheck').name('Collision Check').listen();
-    group = gui.addFolder('Colors');
-    group.addColor(LEAF_COLOR_GRADIENT, '0').name('Leaf Color 1').listen();
-    group.addColor(LEAF_COLOR_GRADIENT, '1').name('Leaf Color 2').listen();
-    group.addColor(LEAF_COLOR_GRADIENT, '2').name('Leaf Color 3').listen();
-    group.addColor(LEAF_COLOR_GRADIENT, '3').name('Leaf Color 4').listen();
-    group.addColor(LEAF_COLOR_GRADIENT, '4').name('Leaf Color 5').listen();
-    gui.add(controls, 'createButton').name('Generate');
 }
 function lookAtMat4(out, eye, center, up) {
     let x0, x1, x2, y0, y1, y2, z0, z1, z2, len;
@@ -303,13 +335,17 @@ function main() {
     // Later, we can import `gl` from `globals.ts` to access it
     setGL(gl);
     // Initial call to load scene
-    const camera = new Camera(vec3.fromValues(8, 8, -8), vec3.fromValues(0, 0, 0));
+    const camera = new Camera(vec3.fromValues(0.5, 3, -2), vec3.fromValues(0.5, 3, -10));
     const renderer = new OpenGLRenderer(canvas);
-    renderer.setClearColor(0.05, 0.05, 0.05, 1);
+    renderer.setClearColor(0.0, 0.0, 0.0, 1);
     gl.enable(gl.DEPTH_TEST);
     mainShader = new ShaderProgram([
         new Shader(gl.VERTEX_SHADER, require('./shaders/custom-vert.glsl')),
         new Shader(gl.FRAGMENT_SHADER, require('./shaders/custom-frag.glsl')),
+    ]);
+    regularShader = new ShaderProgram([
+        new Shader(gl.VERTEX_SHADER, require('./shaders/regular-vert.glsl')),
+        new Shader(gl.FRAGMENT_SHADER, require('./shaders/regular-frag.glsl')),
     ]);
     visualShader = new ShaderProgram([
         new Shader(gl.VERTEX_SHADER, require('./shaders/visual-vert.glsl')),
@@ -325,16 +361,22 @@ function main() {
     ]);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    loadAssets();
     let shadowMapBuffer = {};
     createShadowMapFrameBuffer(gl, shadowMapBuffer);
-    function renderScene(shader) {
-        renderer.render(camera, shader, [plane]);
+    function renderScene(instanceShader, regularShader) {
+        // renderer.render(camera, regularShader, [plane]);
+        for (let key in meshInstances) {
+            let mesh = meshInstances[key];
+            renderer.render(camera, instanceShader, [mesh]);
+        }
     }
     // This function will be called every frame
     function tick() {
+        if (!FlagIsRenderable) {
+            requestAnimationFrame(tick);
+            return;
+        }
         let deltaTime = (new Date()).getTime() - prevTime;
-        let degrees = deltaTime * degreePerMS;
         let rotDelta = mat4.create();
         let lightDir = controls.lightDirection;
         let lightDirection = vec3.fromValues(lightDir[0], lightDir[1], lightDir[2]);
@@ -342,28 +384,37 @@ function main() {
         let position = camera.getPosition();
         stats.begin();
         /*----------  Render Shadow Map into Buffer  ----------*/
-        gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMapBuffer.frameBuffer);
-        gl.viewport(0, 0, window.innerWidth, window.innerHeight);
-        renderer.clear();
-        shadowMapShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
-        setShadowMapData(shadowMapShader);
-        renderScene(shadowMapShader);
+        // gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMapBuffer.frameBuffer);
+        // gl.viewport(0, 0, window.innerWidth, window.innerHeight);
+        // renderer.clear();
+        // shadowMapShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
+        // setShadowMapData(shadowMapShader);
+        // renderScene(shadowMapShader, shadowMapShader);
         /*----------  Render Scene  ----------*/
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, window.innerWidth, window.innerHeight);
         renderer.clear();
-        gl.disable(gl.DEPTH_TEST);
-        skyShader.setTime(frameCount);
-        skyShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
-        renderer.render(camera, skyShader, [sky]);
-        gl.enable(gl.DEPTH_TEST);
+        // gl.disable(gl.DEPTH_TEST);
+        // skyShader.setTime(frameCount);
+        // skyShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
+        // renderer.render(camera, skyShader, [sky]);
+        // gl.enable(gl.DEPTH_TEST);
         mainShader.setTime(frameCount);
         mainShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
-        mainShader.setLightPosition(lightDirection);
-        mainShader.setShadowTexture(1);
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, shadowMapBuffer.frameTexture);
-        renderScene(mainShader);
+        visualShader.setTime(frameCount);
+        visualShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
+        regularShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
+        mainShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
+        regularShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
+        mainShader.setPointLights(sceneLights);
+        // mainShader.setShadowTexture(1);
+        // regularShader.setShadowTexture(1);
+        // gl.activeTexture(gl.TEXTURE1);
+        // gl.bindTexture(gl.TEXTURE_2D, shadowMapBuffer.frameTexture);
+        mainShader.setTexture(0);
+        regularShader.setTexture(0);
+        mainAtlas.bind(0);
+        renderScene(mainShader, regularShader);
         frameCount++;
         stats.end();
         if (shouldCapture) {
@@ -384,7 +435,7 @@ function main() {
     camera.updateProjectionMatrix();
     // Start the render loop
     prevTime = (new Date()).getTime();
-    tick();
+    loadAssets(tick);
 }
 main();
 //# sourceMappingURL=main.js.map

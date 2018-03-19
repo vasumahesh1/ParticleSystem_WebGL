@@ -1,4 +1,4 @@
-import { mat4, vec4, vec2 } from 'gl-matrix';
+import { mat4, vec4, vec2, vec3 } from 'gl-matrix';
 import { gl } from '../../globals';
 // In this file, `gl` is accessible because it is imported above
 class OpenGLRenderer {
@@ -26,6 +26,8 @@ class OpenGLRenderer {
         let invViewProj = mat4.create();
         let invProj = mat4.create();
         let invView = mat4.create();
+        let globalTransform = mat4.create();
+        mat4.fromScaling(globalTransform, vec3.fromValues(3, 3, 3));
         let color = this.geometryColor;
         mat4.identity(model);
         mat4.multiply(viewProj, camera.projectionMatrix, camera.viewMatrix);
@@ -37,6 +39,7 @@ class OpenGLRenderer {
         prog.setGeometryColor(color);
         prog.setInvViewProjMatrix(invViewProj);
         prog.setScreenDimensions(vec2.fromValues(this.canvas.width, this.canvas.height));
+        prog.setGlobalTransfrom(globalTransform);
         for (let drawable of drawables) {
             prog.setModelMatrix(drawable.modelMatrix);
             prog.draw(drawable);

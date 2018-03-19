@@ -1,10 +1,10 @@
-import { vec3, mat4 } from 'gl-matrix';
+import { vec2, vec4 } from 'gl-matrix';
 import Drawable from '../rendering/gl/Drawable';
 import { gl } from '../globals';
 var Loader = require('webgl-obj-loader');
 var Logger = require('debug');
-var dCreate = Logger("lsystem:trace:mesh:instancedMesh");
-var dCreateInfo = Logger("lsystem:info:mesh:instancedMesh");
+var dCreate = Logger("mainApp:meshInstanced:trace");
+var dCreateInfo = Logger("mainApp:meshInstanced:info");
 let CHUNK_SIZE = 200;
 function concatFloat32Array(first, second) {
     var firstLength = first.length;
@@ -30,12 +30,20 @@ class MeshInstanced extends Drawable {
         super();
         this.instanced = true;
         this.name = n;
+        this.instances = 0;
+        this.baseColor = vec4.fromValues(1, 1, 1, 1);
+        this.uvOffset = vec2.fromValues(-1, -1);
+        this.instancePosition = new Array();
+        this.instanceScale = new Array();
+        this.instanceRotation = new Array();
         this.positions = new Float32Array([]);
+        this.scales = new Float32Array([]);
+        this.rotations = new Float32Array([]);
         this.normals = new Float32Array([]);
         this.vertices = new Float32Array([]);
         this.colors = new Float32Array([]);
+        this.uvs = new Float32Array([]);
         this.indices = new Uint32Array([]);
-        this.models = new Array();
     }
     load(url) {
         let ref = this;
@@ -49,46 +57,11 @@ class MeshInstanced extends Drawable {
     setColor(color) {
         this.baseColor = color;
     }
-    getInstanceModelMatrices() {
-        return this.models;
-    }
-    addInstanceUsingTransform(transform) {
-        this.models.push(mat4.clone(transform));
-    }
-    addInstance(position, scale, orient) {
-        let xRot = mat4.create();
-        let yRot = mat4.create();
-        let zRot = mat4.create();
-        let orientation = mat4.create();
-        let scaling = mat4.create();
-        let translation = mat4.create();
-        let finalMatrix = mat4.create();
-        console.log(`[MeshInstanced] Rotation: (${orient[0]}, ${orient[1]}, ${orient[2]})`);
-        mat4.fromRotation(xRot, orient[0], vec3.fromValues(1, 0, 0));
-        mat4.fromRotation(yRot, orient[1], vec3.fromValues(0, 1, 0));
-        mat4.fromRotation(zRot, orient[2], vec3.fromValues(0, 0, 1));
-        mat4.multiply(orientation, yRot, zRot);
-        mat4.multiply(orientation, xRot, orientation);
-        mat4.fromScaling(scaling, vec3.fromValues(scale[0], scale[1], scale[2]));
-        mat4.fromTranslation(translation, vec3.fromValues(position[0], position[1], position[2]));
-        mat4.multiply(finalMatrix, orientation, scaling);
-        mat4.multiply(finalMatrix, translation, finalMatrix);
-        this.models.push(finalMatrix);
-        let arr = new Float32Array([
-            position[0],
-            position[1],
-            position[2],
-            position[3]
-        ]);
-        this.positions = concatFloat32Array(this.positions, arr);
-    }
-    getNumChunks() {
-        return Math.ceil(this.models.length / CHUNK_SIZE);
-    }
-    getChunkedInstanceModelMatrices(chunk) {
-        let start = chunk * CHUNK_SIZE;
-        let end = Math.min((chunk + 1) * CHUNK_SIZE, this.models.length);
-        return this.models.slice(start, end);
+    addInstance(position, orient, scale) {
+        this.instancePosition.push(position[0], position[1], position[2], position[3]);
+        this.instanceScale.push(scale[0], scale[1], scale[2], 0.0);
+        this.instanceRotation.push(orient[0], orient[1], orient[2], orient[3]);
+        this.instances++;
     }
     create() {
         this.vertices = new Float32Array([]);
@@ -98,16 +71,19 @@ class MeshInstanced extends Drawable {
         let vertices = this.rawMesh.vertices;
         let indices = this.rawMesh.indices;
         let vertexNormals = this.rawMesh.vertexNormals;
+        let vertexUvs = this.rawMesh.textures;
         let vertexCount = vertices.length;
         dCreate("Loading Vertices: " + vertexCount);
         dCreate("Loading Indices: " + indices.length);
         dCreate("Loading Normals: " + vertexNormals.length);
+        dCreate("Loading This: ", this);
         let colorArr = new Float32Array([
             this.baseColor[0],
             this.baseColor[1],
             this.baseColor[2],
             1.0
         ]);
+        let uvCounter = 0;
         for (var itr = 0; itr < vertexCount; itr += 3) {
             let arr = new Float32Array([
                 vertices[itr],
@@ -121,28 +97,45 @@ class MeshInstanced extends Drawable {
                 vertexNormals[itr + 2],
                 1.0
             ]);
+            let arrUV = new Float32Array([
+                this.uvOffset[0] + vertexUvs[uvCounter] * this.uvScale,
+                this.uvOffset[1] + vertexUvs[uvCounter + 1] * this.uvScale
+            ]);
+            uvCounter += 2;
             this.vertices = concatFloat32Array(this.vertices, arr);
             this.normals = concatFloat32Array(this.normals, arrN);
             this.colors = concatFloat32Array(this.colors, colorArr);
+            this.uvs = concatFloat32Array(this.uvs, arrUV);
         }
+        this.positions = new Float32Array(this.instancePosition);
+        this.rotations = new Float32Array(this.instanceRotation);
+        this.scales = new Float32Array(this.instanceScale);
         this.indices = new Uint32Array(indices);
         this.generateIdx();
         this.generateVert();
         this.generateNor();
+        this.generateUv();
         this.generateColor();
         this.generateInstancePos();
+        this.generateInstanceRotation();
+        this.generateInstanceScale();
         this.count = this.indices.length;
-        this.instances = this.models.length;
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.bufIdx);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.bufNor);
         gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstancePosition);
         gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceRotation);
+        gl.bufferData(gl.ARRAY_BUFFER, this.rotations, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceScale);
+        gl.bufferData(gl.ARRAY_BUFFER, this.scales, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.bufVert);
         gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.bufCol);
         gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufUv);
+        gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
         dCreateInfo(`Created ${this.name} with ${this.instances} Instances`);
     }
 }

@@ -4,7 +4,7 @@ class Camera {
     constructor(position, target) {
         this.projectionMatrix = mat4.create();
         this.viewMatrix = mat4.create();
-        this.fovy = 45;
+        this.fovy = 45 * Math.PI / 180.0;
         this.aspectRatio = 1;
         this.near = 0.1;
         this.far = 1000;
@@ -18,6 +18,7 @@ class Camera {
         });
         vec3.add(this.target, this.position, this.direction);
         mat4.lookAt(this.viewMatrix, this.controls.eye, this.controls.center, this.controls.up);
+        this.controls.mode = 'turntable';
     }
     setAspectRatio(aspectRatio) {
         this.aspectRatio = aspectRatio;

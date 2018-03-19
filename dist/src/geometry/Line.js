@@ -1,3 +1,4 @@
+import { vec4 } from 'gl-matrix';
 import Drawable from '../rendering/gl/Drawable';
 import { gl } from '../globals';
 function concatFloat32Array(first, second) {
@@ -22,6 +23,14 @@ class Line extends Drawable {
         this.instanced = false;
         this.linesArray = new Array();
         this.lines = true;
+    }
+    add(p1, p2) {
+        let p1Copy = vec4.create();
+        vec4.copy(p1Copy, p1);
+        let p2Copy = vec4.create();
+        vec4.copy(p2Copy, p2);
+        this.linesArray.push(p1Copy);
+        this.linesArray.push(p2Copy);
     }
     create() {
         this.positions = new Float32Array([]);

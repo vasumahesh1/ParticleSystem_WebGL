@@ -1,5 +1,6 @@
 import { mat4, vec3 } from 'gl-matrix';
 import { gl } from '../../globals';
+import PointLight from '../../core/lights/PointLight';
 var activeProgram = null;
 function concatFloat32Array(first, second) {
     var firstLength = first.length;
@@ -20,6 +21,7 @@ export class Shader {
     }
 }
 ;
+const MAX_POINT_LIGHTS = 50;
 class ShaderProgram {
     constructor(shaders) {
         this.prog = gl.createProgram();
@@ -33,7 +35,10 @@ class ShaderProgram {
         this.attrVertPos = gl.getAttribLocation(this.prog, "vs_Pos");
         this.attrNor = gl.getAttribLocation(this.prog, "vs_Nor");
         this.attrCol = gl.getAttribLocation(this.prog, "vs_Col");
+        this.attrUv = gl.getAttribLocation(this.prog, "vs_UV");
         this.attrInstancePos = gl.getAttribLocation(this.prog, "vs_InstPos");
+        this.attrInstanceScale = gl.getAttribLocation(this.prog, "vs_InstScale");
+        this.attrInstanceRotation = gl.getAttribLocation(this.prog, "vs_InstRotation");
         this.unifModel = gl.getUniformLocation(this.prog, "u_Model");
         this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
         this.unifViewProj = gl.getUniformLocation(this.prog, "u_ViewProj");
@@ -52,6 +57,10 @@ class ShaderProgram {
         this.unifSMLightSpace = gl.getUniformLocation(this.prog, "u_LightSpaceMatrix");
         this.unifSMLightViewport = gl.getUniformLocation(this.prog, "u_LightViewportMatrix");
         this.unifShadowTexture = gl.getUniformLocation(this.prog, "u_ShadowTexture");
+        this.unifGlobalTransform = gl.getUniformLocation(this.prog, "u_GlobalTransform");
+        this.unifNumPointLights = gl.getUniformLocation(this.prog, "u_NumPointLights");
+        this.unifPointLights = new Array();
+        PointLight.markLocations(this.prog, this.unifPointLights, MAX_POINT_LIGHTS, "u_PointLights");
     }
     use() {
         if (activeProgram !== this.prog) {
@@ -129,6 +138,16 @@ class ShaderProgram {
         //   }
         //   gl.uniformMatrix4fv(this.unifInstanceModelInvTranspose, false, invertData);
         // }
+    }
+    setPointLights(lights) {
+        this.use();
+        if (this.unifNumPointLights !== -1) {
+            gl.uniform1ui(this.unifNumPointLights, lights.length);
+            for (var itr = 0; itr < lights.length; ++itr) {
+                let light = lights[itr];
+                light.setPointLightData(this.unifPointLights[itr]);
+            }
+        }
     }
     /**
      * @brief      Sets the inverse view projection matrix.
@@ -222,6 +241,12 @@ class ShaderProgram {
             gl.uniformMatrix4fv(this.unifSMLightViewport, false, lightViewport);
         }
     }
+    setGlobalTransfrom(value) {
+        this.use();
+        if (this.unifGlobalTransform !== -1) {
+            gl.uniformMatrix4fv(this.unifGlobalTransform, false, value);
+        }
+    }
     setShadowTexture(num) {
         this.use();
         if (this.unifShadowTexture != -1) {
@@ -290,6 +315,20 @@ class ShaderProgram {
                 gl.vertexAttribDivisor(this.attrInstancePos, 1);
             }
         }
+        if (this.attrInstanceRotation != -1 && d.bindInstanceRotation()) {
+            gl.enableVertexAttribArray(this.attrInstanceRotation);
+            gl.vertexAttribPointer(this.attrInstanceRotation, 4, gl.FLOAT, false, 0, 0);
+            if (d.isInstanced()) {
+                gl.vertexAttribDivisor(this.attrInstanceRotation, 1);
+            }
+        }
+        if (this.attrInstanceScale != -1 && d.bindInstanceScale()) {
+            gl.enableVertexAttribArray(this.attrInstanceScale);
+            gl.vertexAttribPointer(this.attrInstanceScale, 4, gl.FLOAT, false, 0, 0);
+            if (d.isInstanced()) {
+                gl.vertexAttribDivisor(this.attrInstanceScale, 1);
+            }
+        }
         if (this.attrNor != -1 && d.bindNor()) {
             gl.enableVertexAttribArray(this.attrNor);
             gl.vertexAttribPointer(this.attrNor, 4, gl.FLOAT, false, 0, 0);
@@ -302,6 +341,13 @@ class ShaderProgram {
             gl.vertexAttribPointer(this.attrCol, 4, gl.FLOAT, false, 0, 0);
             if (d.isInstanced()) {
                 gl.vertexAttribDivisor(this.attrCol, 0);
+            }
+        }
+        if (this.attrUv != -1 && d.bindUv()) {
+            gl.enableVertexAttribArray(this.attrUv);
+            gl.vertexAttribPointer(this.attrUv, 2, gl.FLOAT, false, 0, 0);
+            if (d.isInstanced()) {
+                gl.vertexAttribDivisor(this.attrUv, 0);
             }
         }
         d.bindIdx();
@@ -317,6 +363,16 @@ class ShaderProgram {
             gl.disableVertexAttribArray(this.attrNor);
         if (this.attrInstancePos != -1)
             gl.disableVertexAttribArray(this.attrInstancePos);
+        if (this.attrInstanceRotation != -1)
+            gl.disableVertexAttribArray(this.attrInstanceRotation);
+        if (this.attrInstanceScale != -1)
+            gl.disableVertexAttribArray(this.attrInstanceScale);
+        if (this.attrNor != -1)
+            gl.disableVertexAttribArray(this.attrNor);
+        if (this.attrCol != -1)
+            gl.disableVertexAttribArray(this.attrCol);
+        if (this.attrUv != -1)
+            gl.disableVertexAttribArray(this.attrUv);
     }
 }
 ;

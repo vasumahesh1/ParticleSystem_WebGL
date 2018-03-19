@@ -3,8 +3,8 @@ import Drawable from '../rendering/gl/Drawable';
 import { gl } from '../globals';
 let Noise = require('noisejs').Noise;
 var Logger = require('debug');
-var dCreateInfo = Logger("lsystem:info:mesh:NoisePlane");
-var dCreate = Logger("lsystem:trace:mesh:NoisePlane");
+var dCreateInfo = Logger("mainApp:mesh:info:NoisePlane");
+var dCreate = Logger("mainApp:mesh:trace:NoisePlane");
 function concatFloat32Array(first, second) {
     var firstLength = first.length;
     var secondLength = second.length;
@@ -44,6 +44,7 @@ class NoisePlane extends Drawable {
         this.seed = seed;
         this.normals = new Float32Array([]);
         this.vertices = new Float32Array([]);
+        this.colors = new Float32Array([]);
         this.indices = new Uint32Array([]);
         let noise = new Noise(seed);
         this.noiseGen = noise;
@@ -52,6 +53,14 @@ class NoisePlane extends Drawable {
         let widthStep = this.width / this.subDivX;
         let heightStep = this.height / this.subDivY;
         let idxCount = 0;
+        let terrainColor = vec3.fromValues(125, 198, 56);
+        vec3.scale(terrainColor, terrainColor, 1.0 / 255);
+        let colorArray = new Float32Array([
+            terrainColor[0], terrainColor[1], terrainColor[2], 1,
+            terrainColor[0], terrainColor[1], terrainColor[2], 1,
+            terrainColor[0], terrainColor[1], terrainColor[2], 1,
+            terrainColor[0], terrainColor[1], terrainColor[2], 1
+        ]);
         for (let startX = -this.width / 2; startX < this.width / 2; startX += widthStep) {
             for (let startY = -this.height / 2; startY < this.height / 2; startY += heightStep) {
                 let noise1 = this.fbm2D(startX, startY) * 512;
@@ -84,6 +93,7 @@ class NoisePlane extends Drawable {
                     normal[0], normal[1], normal[2], 0,
                     normal[0], normal[1], normal[2], 0
                 ]));
+                this.colors = concatFloat32Array(this.colors, colorArray);
                 this.indices = concatUint32Array(this.indices, new Uint32Array([
                     idxCount, idxCount + 1, idxCount + 2,
                     idxCount, idxCount + 2, idxCount + 3
@@ -94,6 +104,7 @@ class NoisePlane extends Drawable {
         this.generateIdx();
         this.generateVert();
         this.generateNor();
+        this.generateColor();
         this.count = this.indices.length;
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.bufIdx);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
@@ -101,6 +112,8 @@ class NoisePlane extends Drawable {
         gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.bufVert);
         gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufCol);
+        gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
         dCreateInfo(`Created Plane with ${this.vertices.length} Vertices`);
     }
 }
