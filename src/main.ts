@@ -20,6 +20,7 @@ import PointLight from './core/lights/PointLight';
 import { Torch, BasicTorch } from './particlesystem/Torch';
 
 var sceneComponents = require('./config/scene_comps.json');
+var particleComponents = require('./config/particle_comps.json');
 var sceneTorches = require('./config/torches.json');
 
 localStorage.debug = 'mainApp:*:info*,mainApp:*:error*'; // ,mainApp:*:trace*';
@@ -29,6 +30,7 @@ var logTrace = Logger("mainApp:main:info");
 var logError = Logger("mainApp:main:error");
 
 let meshInstances: { [symbol: string]: MeshInstanced; } = { };
+let particleInstances: { [symbol: string]: MeshInstanced; } = { };
 
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
@@ -62,6 +64,7 @@ let mainAtlas: Texture;
 let assetLibrary: AssetLibrary;
 
 let mainShader: ShaderProgram; // Instanced
+let particleShader: ShaderProgram; // Instanced
 let regularShader: ShaderProgram; // Not Instanced
 
 let skyShader: ShaderProgram;
@@ -111,6 +114,7 @@ function createStaticScene() {
      let pos = vec4.fromValues(torchData.position[0], torchData.position[1], torchData.position[2], 1);
      let orient = vec4.fromValues(torchData.orient[0], torchData.orient[1], torchData.orient[2], torchData.orient[3]);
      let torch = new constructor(pos, orient);
+     torch.system.particleInstances = particleInstances;
 
      meshInstances[torchData.instance].addInstance(pos, orient, vec3.fromValues(1,1,1));
 
@@ -160,13 +164,22 @@ function loadAssets(callback?: any) {
   (<any>window).AssetLibrary = assetLibrary;
 
   let assets: any = {};
+  let particleAssets: any = {};
 
   for (let itr = 0; itr < sceneComponents.components.length; ++itr) {
     let comp = sceneComponents.components[itr];
     assets[comp.name] = comp.url;
   }
 
+  for (let itr = 0; itr < particleComponents.components.length; ++itr) {
+    let comp = particleComponents.components[itr];
+    particleAssets[comp.name] = comp.url;
+  }
+
   assetLibrary.load(assets)
+    .then(function() {
+      return assetLibrary.load(particleAssets);
+    })
     .then(function() {
       logTrace('Loaded Asssets', assetLibrary);
 
@@ -184,6 +197,13 @@ function loadAssets(callback?: any) {
         meshInstances[comp.name].uvScale = uvScale;
       }
 
+      for (let itr = 0; itr < particleComponents.components.length; ++itr) {
+        let comp = particleComponents.components[itr];
+        particleInstances[comp.name] = new MeshInstanced(comp.name);
+        particleInstances[comp.name].rawMesh = assetLibrary.meshes[comp.name];
+        particleInstances[comp.name].baseScale = vec3.fromValues(comp.baseScale[0], comp.baseScale[1], comp.baseScale[2]);
+      }
+
       createStaticScene();
       // meshInstances["Wahoo"].addInstance(vec4.fromValues(0,5.0,0,1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1));
 
@@ -191,6 +211,10 @@ function loadAssets(callback?: any) {
 
       for(let key in meshInstances) {
         meshInstances[key].create();
+      }
+
+      for(let key in particleInstances) {
+        particleInstances[key].create();
       }
 
       boundingLines.create();
@@ -456,6 +480,11 @@ function main() {
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/custom-frag.glsl')),
   ]);
 
+  particleShader = new ShaderProgram([
+    new Shader(gl.VERTEX_SHADER, require('./shaders/particle-vert.glsl')),
+    new Shader(gl.FRAGMENT_SHADER, require('./shaders/particle-frag.glsl')),
+  ]);
+
   regularShader = new ShaderProgram([
     new Shader(gl.VERTEX_SHADER, require('./shaders/regular-vert.glsl')),
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/regular-frag.glsl')),
@@ -483,11 +512,37 @@ function main() {
 
   createShadowMapFrameBuffer(gl, shadowMapBuffer);
 
-  function renderScene (instanceShader: ShaderProgram, regularShader: ShaderProgram) {
+  function renderScene (instanceShader: ShaderProgram, particleShader: ShaderProgram, regularShader: ShaderProgram, deltaTime:number) {
     // renderer.render(camera, regularShader, [plane]);
     for (let key in meshInstances) {
       let mesh = meshInstances[key];
       renderer.render(camera, instanceShader, [mesh]);
+    }
+
+    for (var key in particleInstances) {
+      let instance = particleInstances[key];
+      instance.clearInstanceBuffers();
+    }
+
+    for (var itr = 0; itr < torches.length; ++itr) {
+      let torch = torches[itr];
+      torch.update(deltaTime, {});
+    }
+
+    for (var itr = 0; itr < torches.length; ++itr) {
+      let torch = torches[itr];
+      torch.render({});
+    }
+
+    // particleInstances.Particle1.addInstance(vec4.fromValues(0,3,-7, 1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1), vec4.fromValues(1,0,0,1));
+
+    for(let key in particleInstances) {
+      particleInstances[key].createInstanceBuffers();
+    }
+
+    for (let key in particleInstances) {
+      let mesh = particleInstances[key];
+      renderer.render(camera, particleShader, [mesh]);
     }
   }
 
@@ -533,6 +588,9 @@ function main() {
 
     mainShader.setTime(frameCount);
     mainShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
+
+    particleShader.setTime(frameCount);
+    particleShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
     
     visualShader.setTime(frameCount);
     visualShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
@@ -541,6 +599,7 @@ function main() {
 
     mainShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
     regularShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
+    particleShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
 
     mainShader.setPointLights(sceneLights); 
 
@@ -550,10 +609,11 @@ function main() {
     // gl.bindTexture(gl.TEXTURE_2D, shadowMapBuffer.frameTexture);
 
     mainShader.setTexture(0);
+    particleShader.setTexture(0);
     regularShader.setTexture(0);
     mainAtlas.bind(0);
 
-    renderScene(mainShader, regularShader);
+    renderScene(mainShader, particleShader, regularShader, deltaTime);
 
     frameCount++;
 

@@ -49,6 +49,24 @@ class WeightedRNG {
 
     return undefined;
   }
+
+  rollNative(): string {
+    let noise = Math.random();
+
+    let range = noise * this.totalWeight;
+
+    for(let key in this.weights) {
+      let weight = this.weights[key];
+
+      if (weight > range) {
+        return key;
+      }
+
+      range -= weight;
+    }
+
+    return undefined;
+  }
 }
 
 export default WeightedRNG;

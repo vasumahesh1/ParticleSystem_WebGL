@@ -13,12 +13,14 @@ import ShaderProgram, { Shader } from './rendering/gl/ShaderProgram';
 import AssetLibrary from './core/utils/AssetLibrary';
 import { BasicTorch } from './particlesystem/Torch';
 var sceneComponents = require('./config/scene_comps.json');
+var particleComponents = require('./config/particle_comps.json');
 var sceneTorches = require('./config/torches.json');
 localStorage.debug = 'mainApp:*:info*,mainApp:*:error*'; // ,mainApp:*:trace*';
 var Logger = require('debug');
 var logTrace = Logger("mainApp:main:info");
 var logError = Logger("mainApp:main:error");
 let meshInstances = {};
+let particleInstances = {};
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
 let controls = {
@@ -76,6 +78,7 @@ function createStaticScene() {
         let pos = vec4.fromValues(torchData.position[0], torchData.position[1], torchData.position[2], 1);
         let orient = vec4.fromValues(torchData.orient[0], torchData.orient[1], torchData.orient[2], torchData.orient[3]);
         let torch = new constructor(pos, orient);
+        torch.system.particleInstances = particleInstances;
         meshInstances[torchData.instance].addInstance(pos, orient, vec3.fromValues(1, 1, 1));
         for (var j = 0; j < torch.lights.length; ++j) {
             sceneLights.push(torch.lights[j]);
@@ -113,11 +116,19 @@ function loadAssets(callback) {
     assetLibrary = new AssetLibrary();
     window.AssetLibrary = assetLibrary;
     let assets = {};
+    let particleAssets = {};
     for (let itr = 0; itr < sceneComponents.components.length; ++itr) {
         let comp = sceneComponents.components[itr];
         assets[comp.name] = comp.url;
     }
+    for (let itr = 0; itr < particleComponents.components.length; ++itr) {
+        let comp = particleComponents.components[itr];
+        particleAssets[comp.name] = comp.url;
+    }
     assetLibrary.load(assets)
+        .then(function () {
+        return assetLibrary.load(particleAssets);
+    })
         .then(function () {
         logTrace('Loaded Asssets', assetLibrary);
         let uvScale = sceneComponents.uvScale;
@@ -129,6 +140,12 @@ function loadAssets(callback) {
                 meshInstances[comp.name].uvOffset = vec2.fromValues(comp.uvOffset[0] * uvScale, comp.uvOffset[1] * uvScale);
             }
             meshInstances[comp.name].uvScale = uvScale;
+        }
+        for (let itr = 0; itr < particleComponents.components.length; ++itr) {
+            let comp = particleComponents.components[itr];
+            particleInstances[comp.name] = new MeshInstanced(comp.name);
+            particleInstances[comp.name].rawMesh = assetLibrary.meshes[comp.name];
+            particleInstances[comp.name].baseScale = vec3.fromValues(comp.baseScale[0], comp.baseScale[1], comp.baseScale[2]);
         }
         createStaticScene();
         // meshInstances["Wahoo"].addInstance(vec4.fromValues(0,5.0,0,1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1));
@@ -377,6 +394,14 @@ function main() {
             return;
         }
         let deltaTime = (new Date()).getTime() - prevTime;
+        for (var itr = 0; itr < torches.length; ++itr) {
+            let torch = torches[itr];
+            torch.update(deltaTime, {});
+        }
+        for (var itr = 0; itr < torches.length; ++itr) {
+            let torch = torches[itr];
+            torch.render({});
+        }
         let rotDelta = mat4.create();
         let lightDir = controls.lightDirection;
         let lightDirection = vec3.fromValues(lightDir[0], lightDir[1], lightDir[2]);

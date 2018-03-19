@@ -39,6 +39,7 @@ class ShaderProgram {
         this.attrInstancePos = gl.getAttribLocation(this.prog, "vs_InstPos");
         this.attrInstanceScale = gl.getAttribLocation(this.prog, "vs_InstScale");
         this.attrInstanceRotation = gl.getAttribLocation(this.prog, "vs_InstRotation");
+        this.attrInstanceColor = gl.getAttribLocation(this.prog, "vs_InstColor");
         this.unifModel = gl.getUniformLocation(this.prog, "u_Model");
         this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
         this.unifViewProj = gl.getUniformLocation(this.prog, "u_ViewProj");
@@ -327,6 +328,13 @@ class ShaderProgram {
             gl.vertexAttribPointer(this.attrInstanceScale, 4, gl.FLOAT, false, 0, 0);
             if (d.isInstanced()) {
                 gl.vertexAttribDivisor(this.attrInstanceScale, 1);
+            }
+        }
+        if (this.attrInstanceColor != -1 && d.bindInstanceColor()) {
+            gl.enableVertexAttribArray(this.attrInstanceColor);
+            gl.vertexAttribPointer(this.attrInstanceColor, 4, gl.FLOAT, false, 0, 0);
+            if (d.isInstanced()) {
+                gl.vertexAttribDivisor(this.attrInstanceColor, 1);
             }
         }
         if (this.attrNor != -1 && d.bindNor()) {

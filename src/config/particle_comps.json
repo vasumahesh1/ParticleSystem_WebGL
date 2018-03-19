@@ -1,0 +1,7 @@
+{
+  "components": [{
+    "name": "Particle1",
+    "url": "./src/objs/SquarePlane.obj",
+    "baseScale": [0.05, 0.05, 0.05]
+  }]
+}

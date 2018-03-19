@@ -1,4 +1,4 @@
-import { vec2, vec4 } from 'gl-matrix';
+import { vec2, vec3, vec4 } from 'gl-matrix';
 import Drawable from '../rendering/gl/Drawable';
 import { gl } from '../globals';
 var Loader = require('webgl-obj-loader');
@@ -32,10 +32,12 @@ class MeshInstanced extends Drawable {
         this.name = n;
         this.instances = 0;
         this.baseColor = vec4.fromValues(1, 1, 1, 1);
+        this.baseScale = vec3.fromValues(1, 1, 1);
         this.uvOffset = vec2.fromValues(-1, -1);
         this.instancePosition = new Array();
         this.instanceScale = new Array();
         this.instanceRotation = new Array();
+        this.instanceColor = new Array();
         this.positions = new Float32Array([]);
         this.scales = new Float32Array([]);
         this.rotations = new Float32Array([]);
@@ -57,10 +59,11 @@ class MeshInstanced extends Drawable {
     setColor(color) {
         this.baseColor = color;
     }
-    addInstance(position, orient, scale) {
+    addInstance(position, orient, scale, color = vec4.fromValues(1, 1, 1, 1)) {
         this.instancePosition.push(position[0], position[1], position[2], position[3]);
         this.instanceScale.push(scale[0], scale[1], scale[2], 0.0);
         this.instanceRotation.push(orient[0], orient[1], orient[2], orient[3]);
+        this.instanceColor.push(color[0], color[1], color[2], color[3]);
         this.instances++;
     }
     create() {
@@ -86,9 +89,9 @@ class MeshInstanced extends Drawable {
         let uvCounter = 0;
         for (var itr = 0; itr < vertexCount; itr += 3) {
             let arr = new Float32Array([
-                vertices[itr],
-                vertices[itr + 1],
-                vertices[itr + 2],
+                vertices[itr] * this.baseScale[0],
+                vertices[itr + 1] * this.baseScale[1],
+                vertices[itr + 2] * this.baseScale[2],
                 1.0
             ]);
             let arrN = new Float32Array([
@@ -104,21 +107,23 @@ class MeshInstanced extends Drawable {
             uvCounter += 2;
             this.vertices = concatFloat32Array(this.vertices, arr);
             this.normals = concatFloat32Array(this.normals, arrN);
-            this.colors = concatFloat32Array(this.colors, colorArr);
+            // this.colors = concatFloat32Array(this.colors, colorArr);
             this.uvs = concatFloat32Array(this.uvs, arrUV);
         }
         this.positions = new Float32Array(this.instancePosition);
         this.rotations = new Float32Array(this.instanceRotation);
         this.scales = new Float32Array(this.instanceScale);
+        this.colors = new Float32Array(this.instanceColor);
         this.indices = new Uint32Array(indices);
         this.generateIdx();
         this.generateVert();
         this.generateNor();
         this.generateUv();
-        this.generateColor();
+        // this.generateColor();
         this.generateInstancePos();
         this.generateInstanceRotation();
         this.generateInstanceScale();
+        this.generateInstanceColor();
         this.count = this.indices.length;
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.bufIdx);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
@@ -132,7 +137,7 @@ class MeshInstanced extends Drawable {
         gl.bufferData(gl.ARRAY_BUFFER, this.scales, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.bufVert);
         gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.STATIC_DRAW);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufCol);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceColor);
         gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.bufUv);
         gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);

@@ -15,6 +15,7 @@ class Drawable {
         this.instPosBound = false;
         this.instScaBound = false;
         this.instRotBound = false;
+        this.instColBound = false;
     }
     destory() {
         gl.deleteBuffer(this.bufIdx);
@@ -24,6 +25,7 @@ class Drawable {
         gl.deleteBuffer(this.bufInstancePosition);
         gl.deleteBuffer(this.bufInstanceRotation);
         gl.deleteBuffer(this.bufInstanceScale);
+        gl.deleteBuffer(this.bufInstanceColor);
     }
     generateIdx() {
         this.idxBound = true;
@@ -40,6 +42,10 @@ class Drawable {
     generateInstanceScale() {
         this.instScaBound = true;
         this.bufInstanceScale = gl.createBuffer();
+    }
+    generateInstanceColor() {
+        this.instColBound = true;
+        this.bufInstanceColor = gl.createBuffer();
     }
     generateInstanceRotation() {
         this.instRotBound = true;
@@ -92,6 +98,12 @@ class Drawable {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceScale);
         }
         return this.instScaBound;
+    }
+    bindInstanceColor() {
+        if (this.instColBound) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceColor);
+        }
+        return this.instColBound;
     }
     bindNor() {
         if (this.norBound) {

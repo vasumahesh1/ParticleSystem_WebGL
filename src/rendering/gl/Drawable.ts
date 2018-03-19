@@ -17,6 +17,7 @@ abstract class Drawable {
   bufInstancePosition: WebGLBuffer;
   bufInstanceRotation: WebGLBuffer;
   bufInstanceScale: WebGLBuffer;
+  bufInstanceColor: WebGLBuffer;
 
   idxBound: boolean = false;
   vertBound: boolean = false;
@@ -26,6 +27,7 @@ abstract class Drawable {
   instPosBound: boolean = false;
   instScaBound: boolean = false;
   instRotBound: boolean = false;
+  instColBound: boolean = false;
 
   abstract create() : void;
 
@@ -37,6 +39,7 @@ abstract class Drawable {
     gl.deleteBuffer(this.bufInstancePosition);
     gl.deleteBuffer(this.bufInstanceRotation);
     gl.deleteBuffer(this.bufInstanceScale);
+    gl.deleteBuffer(this.bufInstanceColor);
   }
 
   generateIdx() {
@@ -57,6 +60,11 @@ abstract class Drawable {
   generateInstanceScale() {
     this.instScaBound = true;
     this.bufInstanceScale = gl.createBuffer();
+  }
+
+  generateInstanceColor() {
+    this.instColBound = true;
+    this.bufInstanceColor = gl.createBuffer();
   }
 
   generateInstanceRotation() {
@@ -119,6 +127,13 @@ abstract class Drawable {
       gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceScale);
     }
     return this.instScaBound;
+  }
+
+  bindInstanceColor(): boolean {
+    if (this.instColBound) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceColor);
+    }
+    return this.instColBound;
   }
 
   bindNor(): boolean {
