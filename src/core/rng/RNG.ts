@@ -41,6 +41,16 @@ class RNG {
 
     return val;
   }
+
+  rollNative(): number {
+    let noise = Math.random();
+
+    let val = (noise * (this.max - this.min)) + this.min;
+
+    logTrace('RNG Rolled', val);
+
+    return val;
+  }
 }
 
 export default RNG;
