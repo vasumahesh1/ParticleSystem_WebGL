@@ -17,7 +17,7 @@ import { ShaderControls, WaterControls } from './rendering/gl/ShaderControls';
 import ShaderProgram, { Shader } from './rendering/gl/ShaderProgram';
 import AssetLibrary from './core/utils/AssetLibrary';
 import PointLight from './core/lights/PointLight';
-import { Torch, BasicTorch, BasicOrbTorch, Torch2 } from './particlesystem/Torch';
+import { Torch, BasicTorch, BasicOrbTorch, Torch2, Torch3 } from './particlesystem/Torch';
 import { ParticleSystem, ParticleSource, ParticleAttractor, ParticleRepulsor, MeshParticleSystem } from './particlesystem/ParticleSystem';
 
 const DEFAULT_ORIENT:vec4 = vec4.fromValues(0, 0, 0, 1);
@@ -35,6 +35,7 @@ var logError = Logger("mainApp:main:error");
 
 let meshInstances: { [symbol: string]: MeshInstanced; } = { };
 let particleInstances: { [symbol: string]: MeshInstanced; } = { };
+let activeSystems: { [symbol: string]: ParticleSystem; } = { };
 
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
@@ -46,10 +47,26 @@ let controls = {
 let torchImpl: any = {
   BasicTorch: BasicTorch,
   BasicOrbTorch: BasicOrbTorch,
-  Torch2: Torch2
+  Torch2: Torch2,
+  Torch3: Torch3
 };
 
 let meshSystem:MeshParticleSystem;
+
+function createFlames() {
+  let system = new ParticleSystem();
+  system.sources.push(new ParticleSource(vec4.fromValues(0, 0 + 0.4, 0, 1)));
+  system.attractors.push(new ParticleAttractor(vec4.fromValues(0, 0 + 1.1, 0, 1)));
+  system.particleInstances = particleInstances;
+  activeSystems['BasicFlame'] = system;
+
+  system = new ParticleSystem();
+  system.particleInstances = particleInstances;
+  system.sources.push(new ParticleSource(vec4.fromValues(0, 0.4, 0, 1), {spawnDuration: 500, ttl: 400}));
+  system.attractors.push(new ParticleAttractor(vec4.fromValues(0, 0 + 1.1, 0, 1)));
+  system.repulsors.push(new ParticleRepulsor(vec4.fromValues(0, 0.6, 0, 1)));
+  activeSystems['OrbFlame'] = system;
+}
 
 const SM_VIEWPORT_TRANSFORM:mat4 = mat4.fromValues(
   0.5, 0.0, 0.0, 0.0,
@@ -68,6 +85,7 @@ let plane: NoisePlane;
 let shaderControls: ShaderControls;
 
 let mainAtlas: Texture;
+let envMap: Texture;
 
 let assetLibrary: AssetLibrary;
 
@@ -87,28 +105,28 @@ let torches: Array<any>;
 let sceneLights: Array<PointLight>;
 
 function createStaticScene() {
-  let roomWidth = 20;
+  let roomWidth = 10;
   let roomLength = 50;
   let roomHeight = 5;
   let middleWidth = 5; // odd
 
-  for (var i = 0; i < roomLength; ++i) {
-    for (var j = 0; j < roomHeight; ++j) {
-      meshInstances.StoneWall.addInstance(vec4.fromValues(-roomWidth / 2.0, j + 0.5, -i - 0.5, 1), vec4.fromValues(0, 0.7071068, 0, 0.7071068), vec3.fromValues(1,1,1));
-      meshInstances.StoneWall.addInstance(vec4.fromValues(roomWidth / 2.0, j + 0.5, -i - 0.5, 1), vec4.fromValues(0, 0.7071068, 0, 0.7071068), vec3.fromValues(1,1,1));
+  for (var i = 0; i < roomLength; i+=0.5) {
+    for (var j = 0; j < roomHeight; j+=0.5) {
+      meshInstances.StoneWall.addInstance(vec4.fromValues(-roomWidth / 2.0, j + 0.25, -i - 0.5, 1), vec4.fromValues(0, 0.7071068, 0, 0.7071068), vec3.fromValues(0.5, 0.5, 0.5));
+      meshInstances.StoneWall.addInstance(vec4.fromValues(roomWidth / 2.0, j + 0.25, -i - 0.5, 1), vec4.fromValues(0, -0.7071068, 0, 0.7071068), vec3.fromValues(0.5, 0.5, 0.5));
     }
 
-    for (var j = -roomWidth / 2.0; j < roomWidth / 2.0; ++j) {
+    for (var j = -roomWidth / 2.0; j < roomWidth / 2.0; j+= 0.5) {
       if (j < middleWidth / 2 && j > -middleWidth / 2) {
-        meshInstances.Floor2.addInstance(vec4.fromValues(j + 0.5, 0, -i - 0.5, 1), vec4.fromValues(-0.7071068, 0, 0, 0.7071068), vec3.fromValues(1,1,1));
+        meshInstances.Floor2.addInstance(vec4.fromValues(j + 0.5, 0, -i - 0.5, 1), vec4.fromValues(-0.7071068, 0, 0, 0.7071068), vec3.fromValues(0.5, 0.5, 0.5));
         continue;
       }
       // -90 X
-      meshInstances.Floor1.addInstance(vec4.fromValues(j + 0.5, 0, -i - 0.5, 1), vec4.fromValues(-0.7071068, 0, 0, 0.7071068), vec3.fromValues(1,1,1));
+      meshInstances.Floor1.addInstance(vec4.fromValues(j + 0.5, 0, -i - 0.5, 1), vec4.fromValues(-0.7071068, 0, 0, 0.7071068), vec3.fromValues(0.5, 0.5, 0.5));
     }
 
-    for (var j = -roomWidth / 2.0; j < roomWidth / 2.0; ++j) {
-      meshInstances.Roof1.addInstance(vec4.fromValues(j + 0.5, roomHeight, -i - 0.5, 1), vec4.fromValues(0.7071068, 0, 0, 0.7071068), vec3.fromValues(1,1,1));
+    for (var j = -roomWidth / 2.0; j < roomWidth / 2.0; j+=0.5) {
+      meshInstances.Roof1.addInstance(vec4.fromValues(j + 0.5, roomHeight, -i - 0.5, 1), vec4.fromValues(0.7071068, 0, 0, 0.7071068), vec3.fromValues(0.5, 0.5, 0.5));
     }
    }
 
@@ -120,10 +138,11 @@ function createStaticScene() {
      let constructor = torchImpl[torchData["impl"]];
      let opts = torchData["options"] || {};
 
+     opts.meshInstances = meshInstances;
+
      let pos = vec4.fromValues(torchData.position[0], torchData.position[1], torchData.position[2], 1);
      let orient = vec4.fromValues(torchData.orient[0], torchData.orient[1], torchData.orient[2], torchData.orient[3]);
-     let torch = new constructor(pos, orient, meshInstances, particleInstances, opts);
-     torch.system.particleInstances = particleInstances;
+     let torch = new constructor(pos, orient, activeSystems, opts);
 
      meshInstances[torchData.instance].addInstance(pos, orient, vec3.fromValues(1,1,1));
 
@@ -196,6 +215,7 @@ function loadAssets(callback?: any) {
 
   boundingLines = new Line();
   mainAtlas = new Texture('./psd/texture_atlas.png');
+  envMap = new Texture('./psd/env.png');
 
   // Enable for Debug
   boundingLines.linesArray.push(vec4.fromValues(0, 0, 0, 1.0));
@@ -256,8 +276,8 @@ function loadAssets(callback?: any) {
         particleInstances[comp.name].baseScale = vec3.fromValues(comp.baseScale[0], comp.baseScale[1], comp.baseScale[2]);
       }
 
+      createFlames();
       initMeshParticleSystem(meshInstances.TargetMesh1);
-
       createStaticScene();
       // meshInstances["Wahoo"].addInstance(vec4.fromValues(0,5.0,0,1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1));
 
@@ -578,9 +598,8 @@ function main() {
       instance.clearInstanceBuffers();
     }
 
-    for (var itr = 0; itr < torches.length; ++itr) {
-      let torch = torches[itr];
-      torch.update(deltaTime, {});
+    for(var key in activeSystems) {
+      activeSystems[key].update(deltaTime, {});
     }
 
     for (var itr = 0; itr < torches.length; ++itr) {
@@ -666,9 +685,13 @@ function main() {
     // gl.bindTexture(gl.TEXTURE_2D, shadowMapBuffer.frameTexture);
 
     mainShader.setTexture(0);
+    mainShader.setTexture(1);
     particleShader.setTexture(0);
+    particleShader.setTexture(1);
     regularShader.setTexture(0);
+    regularShader.setTexture(1);
     mainAtlas.bind(0);
+    envMap.bind(1);
 
     renderScene(mainShader, particleShader, regularShader, deltaTime);
 

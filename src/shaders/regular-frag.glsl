@@ -11,6 +11,7 @@ struct PointLight {
 
     vec3 position;
     float range;
+    float contrib;
 
     vec3 attn;
 };
@@ -91,7 +92,7 @@ vec4 calculatePointLightContribution(vec4 inputColor, vec3 normal) {
     diffuse *= att;
     spec    *= att;
 
-    totalLightContrib += (diffuse + spec + ambient);
+    totalLightContrib += light.contrib * (diffuse + spec + ambient);
   }
 
   inputColor = inputColor * totalLightContrib;

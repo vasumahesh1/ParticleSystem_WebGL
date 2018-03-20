@@ -6,6 +6,7 @@ abstract class Drawable {
   instances: number = 0;
   instanced: boolean = false;
   lines: boolean = false;
+  material: any;
 
   modelMatrix: mat4 = mat4.create();
 

@@ -1,4 +1,4 @@
-import { vec3, vec4, mat3 } from 'gl-matrix';
+import { vec3, vec4, mat4, mat3 } from 'gl-matrix';
 import WeightedRNG from '../core/rng/WeightedRNG';
 import RNG from '../core/rng/RNG';
 const DEFAULT_ORIENT = vec4.fromValues(0, 0, 0, 1);
@@ -48,8 +48,8 @@ class ParticleSource {
         this.position = position;
         this.lastSpawn = 0;
         this.coneAngle = options.coneAngle ? degreeToRad(options.coneAngle / 2) : degreeToRad(60 / 2);
-        this.spawnDuration = options.spawnDuration || 100;
-        this.ttl = options.ttl || 750;
+        this.spawnDuration = options.spawnDuration || 200;
+        this.ttl = options.ttl || 175;
         this.startColor = options.startColor ?
             vec4.fromValues(options.startColor[0], options.startColor[1], options.startColor[2], options.startColor[3]) : vec4.fromValues(1, 1, 1, 1);
         this.endColor = options.endColor ?
@@ -70,7 +70,7 @@ class ParticleSource {
             this.velocityRNG = new RNG(config.rng.seed, config.rng.min, config.rng.max);
         }
         else {
-            this.velocityRNG = new RNG(3412, 400, 1500);
+            this.velocityRNG = new RNG(3412, 200, 700);
         }
         if (options.count) {
             let config = options.count;
@@ -79,18 +79,24 @@ class ParticleSource {
         else {
             this.countRNG = new RNG(3412, 200, 500);
         }
-        this.ttlRNG = new RNG(97, -200, 200);
+        this.ttlRNG = new RNG(97, -100, 0);
         this.colorGradient = options.colorGradient || [[0.0, [255, 255, 255]], [0.2, [252, 176, 33]], [1, [199.0, 78.0, 34.0]]];
     }
-    addParticles(container) {
-        let toAdd = this.countRNG.rollNative();
+    addParticles(container, attractors) {
+        const DEFAULT_ORIENT = vec4.fromValues(0, 0, 0, 1);
+        const DEFAULT_SCALE = vec3.fromValues(1, 1, 1);
+        const transform = mat3.fromValues(1, 0, 0, 0, 0, -1, 0, 1, 0);
+        let toAdd = Math.floor(this.countRNG.rollNative());
         for (var itr = 0; itr < toAdd; ++itr) {
             let mesh = this.particleRNG.rollNative();
             let particlePos = vec4.create();
+            let particlePosCopy = vec4.create();
             vec4.copy(particlePos, this.position);
-            let ttl = this.ttlRNG.rollNative() + this.ttl;
+            vec4.copy(particlePosCopy, this.position);
+            let ttl = this.ttl + this.ttlRNG.rollNative();
             let state = new ParticleState(particlePos, DEFAULT_ORIENT, DEFAULT_SCALE, ttl);
             state.mesh = mesh;
+            state.sourcePosition = particlePosCopy;
             state.color = this.startColor;
             state.colorGradient = this.colorGradient;
             let speed = this.velocityRNG.rollNative() / 1000;
@@ -102,20 +108,61 @@ class ParticleSource {
             vec3.transformMat3(direction, direction, transform);
             vec3.scale(direction, direction, speed);
             state.velocity = vec4.fromValues(direction[0], direction[1], direction[2], 0);
+            if (attractors) {
+                let selected = Math.floor(Math.random() * attractors.length);
+                let attr = attractors[selected];
+                let destination = vec4.create();
+                vec4.copy(destination, attr.position);
+                state.destination = destination;
+            }
             container.push(state);
         }
     }
 }
 class ParticleAttractor {
-    constructor(position) {
-        this.magnitude = 0.5;
+    constructor(position, options = {}) {
+        this.magnitude = options.magnitude || 0.5;
         this.position = position;
         this.positionVec3 = vec3.fromValues(position[0], position[1], position[2]);
     }
     compute(state, deltaTime) {
-        let particleDir = vec3.fromValues(state.velocity[0], state.velocity[1], state.velocity[2]);
+        // let attrDirection = vec4.create();
+        // let attrDirectionVec3 = vec3.create();
+        // vec4.sub(attrDirection, this.position, state.sourcePosition);
+        // vec3.normalize(attrDirectionVec3, vec3.fromValues(attrDirection[0], attrDirection[1], attrDirection[2]));
+        // vec3.scale(attrDirectionVec3, attrDirectionVec3, this.magnitude);
+        // vec4.add(state.velocity, state.velocity, vec4.fromValues(attrDirectionVec3[0], attrDirectionVec3[1], attrDirectionVec3[2], 0));
+        let statePos = vec3.fromValues(state.velocity[0], state.velocity[1], state.velocity[2]);
+        let diff = vec4.create();
+        vec4.sub(diff, this.position, state.position);
+        let diffVec3 = vec3.create();
+        vec3.normalize(diffVec3, vec3.fromValues(diff[0], diff[1], diff[2]));
         let normal = vec3.create();
-        this.positionVec3;
+        vec3.cross(normal, statePos, diffVec3);
+        vec3.normalize(normal, normal);
+        let transform = mat4.create();
+        mat4.fromRotation(transform, degreeToRad(5) * this.magnitude, normal);
+        vec4.transformMat4(state.velocity, state.velocity, transform);
+    }
+}
+class ParticleRepulsor {
+    constructor(position, options = {}) {
+        this.radius = options.radius || 0.1;
+        this.position = position;
+        this.positionVec3 = vec3.fromValues(position[0], position[1], position[2]);
+    }
+    compute(state, deltaTime) {
+        let diff = vec4.create();
+        vec4.sub(diff, state.position, this.position);
+        let diffRadius = vec4.length(diff) - this.radius;
+        if (diffRadius < 0) {
+            let dir = vec3.create();
+            vec3.normalize(dir, vec3.fromValues(diff[0], diff[1], diff[2]));
+            diffRadius = -diffRadius;
+            vec3.scale(dir, dir, diffRadius);
+            let dirVec4 = vec4.fromValues(dir[0], 0, dir[2], 0);
+            vec4.add(state.position, state.position, dirVec4);
+        }
     }
 }
 class ParticleSystem {
@@ -123,13 +170,81 @@ class ParticleSystem {
         this.states = new Array();
         this.sources = new Array();
         this.attractors = new Array();
+        this.repulsors = new Array();
+    }
+    update(deltaTime, updateOpts = {}) {
+        let currTime = Date.now();
+        if (this.states.length < 100) {
+            for (var key in this.sources) {
+                let source = this.sources[key];
+                // if (currTime - source.lastSpawn > source.spawnDuration) {
+                source.addParticles(this.states);
+                source.lastSpawn = currTime;
+                // }
+            }
+        }
+        for (var i = this.states.length - 1; i >= 0; i--) {
+            let state = this.states[i];
+            let vel = vec4.create();
+            vec4.copy(vel, state.velocity);
+            vec4.scale(vel, vel, deltaTime * 0.001);
+            let pos = vec4.create();
+            vec4.copy(pos, state.position);
+            vec4.add(pos, pos, vel);
+            state.position = pos;
+            state.updateColor();
+            for (var j = 0; j < this.attractors.length; ++j) {
+                let attr = this.attractors[j];
+                attr.compute(state, deltaTime);
+            }
+            for (var j = 0; j < this.repulsors.length; ++j) {
+                let rep = this.repulsors[j];
+                rep.compute(state, deltaTime);
+            }
+        }
+        for (var i = this.states.length - 1; i >= 0; i--) {
+            let state = this.states[i];
+            state.ttl -= deltaTime;
+            // logError(`TTL: ${state.ttl} with ${deltaTime}`);
+            if (state.ttl <= 0) {
+                this.states.splice(i, 1);
+                // console.log('Deleting');
+            }
+        }
+        // logError(`States: ${this.states.length} in System: Deleted = ${test}`);
+    }
+    render(renderOpts = {}) {
+        let meshes = this.particleInstances;
+        for (var i = this.states.length - 1; i >= 0; i--) {
+            let state = this.states[i];
+            let instance = meshes[state.mesh];
+            if (!instance) {
+                logError(`Cannot Find Mesh: ${state.mesh} in Meshes`);
+                return;
+            }
+            instance.addInstance(state.position, state.orient, state.scale, state.color);
+        }
+    }
+}
+class MeshParticleSystem {
+    constructor(options = {}) {
+        this.states = new Array();
+        this.sources = new Array();
+        this.attractors = new Array();
+        this.repulsors = new Array();
+    }
+    create() {
+        for (var key in this.sources) {
+            let source = this.sources[key];
+            source.addParticles(this.states, this.attractors);
+        }
     }
     update(deltaTime, updateOpts = {}) {
         let currTime = new Date().getTime();
         for (var key in this.sources) {
             let source = this.sources[key];
             if (currTime - source.lastSpawn > source.spawnDuration) {
-                source.addParticles(this.states);
+                source.addParticles(this.states, this.attractors);
                 source.lastSpawn = currTime;
             }
         }
@@ -143,9 +258,21 @@ class ParticleSystem {
             vec4.add(pos, pos, vel);
             state.position = pos;
             state.updateColor();
-            for (var i = 0; i < this.attractors.length; ++i) {
-                let attr = this.attractors[i];
-                attr.compute(state, deltaTime);
+            // let direction = vec4.create();
+            // vec4.sub(direction, state.destination, state.position);
+            // vec4.scale(direction, direction, 0.5);
+            // state.velocity = direction;
+            let direction = vec4.create();
+            vec4.sub(direction, state.destination, state.position);
+            if (vec4.length(direction) < 0.1) {
+                state.velocity = vec4.create();
+            }
+            else {
+                let dirVec3 = vec3.fromValues(direction[0], direction[1], direction[2]);
+                vec3.normalize(dirVec3, dirVec3);
+                vec3.scale(dirVec3, dirVec3, 0.05);
+                direction = vec4.fromValues(dirVec3[0], dirVec3[1], dirVec3[2], 0);
+                vec4.add(state.velocity, state.velocity, direction);
             }
         }
         for (var i = this.states.length - 1; i >= 0; i--) {
@@ -170,5 +297,5 @@ class ParticleSystem {
     }
 }
 export default ParticleSystem;
-export { ParticleSystem, ParticleSource, ParticleState };
+export { ParticleSystem, ParticleSource, ParticleState, ParticleAttractor, ParticleRepulsor, MeshParticleSystem };
 //# sourceMappingURL=ParticleSystem.js.map

@@ -31,6 +31,11 @@
     "meshMode": "UV",
     "uvOffset": [1, 1]
   }, {
+    "name": "Torch3",
+    "url": "./src/objs/Torch3.obj",
+    "meshMode": "UV",
+    "uvOffset": [2, 1]
+  }, {
     "name": "Orb1",
     "url": "./src/objs/Orb.obj",
     "meshMode": "UV",

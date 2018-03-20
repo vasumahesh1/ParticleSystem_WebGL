@@ -66,6 +66,12 @@ class OpenGLRenderer {
 
     for (let drawable of drawables) {
       prog.setModelMatrix(drawable.modelMatrix);
+
+
+      if (drawable.material) {
+        prog.setMaterial(drawable.material);
+      }
+
       prog.draw(drawable);
     }
   }

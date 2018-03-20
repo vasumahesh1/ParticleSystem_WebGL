@@ -1,5 +1,6 @@
 import { vec2, vec3, vec4, mat4 } from 'gl-matrix';
 import Drawable from '../rendering/gl/Drawable';
+import Material from '../core/material/Material';
 import { gl } from '../globals';
 
 var Loader = require('webgl-obj-loader');
@@ -66,6 +67,8 @@ class MeshInstanced extends Drawable {
     this.name = n;
 
     this.uvScale = 1;
+
+    this.material = new Material();
 
     this.instances = 0;
     this.baseColor = vec4.fromValues(1,1,1,1);
@@ -142,7 +145,6 @@ class MeshInstanced extends Drawable {
   }
 
   addInstance(position: vec4, orient: vec4, scale: vec3, color: vec4 = vec4.fromValues(1,1,1,1)) {
-
     this.instancePosition.push(position[0], position[1], position[2], position[3]);
     this.instanceScale.push(scale[0], scale[1], scale[2], 0.0);
     this.instanceRotation.push(orient[0], orient[1], orient[2], orient[3]);

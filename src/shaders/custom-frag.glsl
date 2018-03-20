@@ -11,9 +11,19 @@ struct PointLight {
 
     vec3 position;
     float range;
+    float contrib;
 
     vec3 attn;
 };
+
+struct Material {
+    vec4 diffuse;
+    vec4 specular;
+    float reflectivity;
+    int matId;
+};
+
+uniform Material u_Material;
 
 uniform PointLight u_PointLights[MAX_POINT_LIGHTS];
 uniform uint u_NumPointLights; 
@@ -21,6 +31,7 @@ uniform uint u_NumPointLights;
 uniform vec4 u_Eye;
 uniform vec4 u_Color;
 uniform sampler2D u_Texture;
+uniform sampler2D u_Texture1;
 
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
@@ -76,13 +87,12 @@ vec4 calculatePointLightContribution(vec4 inputColor, vec3 normal) {
     float diffuseTerm = dot(lightVec, normal);
 
     // Flatten to avoid dynamic branching.
-    if( diffuseTerm > 0.0f )
-    {
+    if( diffuseTerm > 0.0f ) {
       vec3 v         = reflect(-lightVec, normal);
       float specFactor = pow(max(dot(v, normalize(vec3(u_Eye))), 0.0f), 128.0); // TODO: Material
             
-      diffuse = diffuseTerm * light.diffuse;
-      spec    = specFactor * light.specular;
+      diffuse = u_Material.diffuse * diffuseTerm * light.diffuse;
+      spec    = u_Material.specular * specFactor * light.specular;
     }
 
     // Attenuate
@@ -91,12 +101,23 @@ vec4 calculatePointLightContribution(vec4 inputColor, vec3 normal) {
     diffuse *= att;
     spec    *= att;
 
-    totalLightContrib += (diffuse + spec + ambient);
+    totalLightContrib += light.contrib * (diffuse + spec); // + ambient
   }
 
   inputColor = inputColor * totalLightContrib;
 
   inputColor.a = alpha;
+
+  if (u_Material.reflectivity > 0.0){
+    vec3 r = reflect(-vec3(u_Eye), normal);
+    float m = 2.0f * sqrt(pow(r.x, 2.0) + pow(r.y, 2.0) + pow(r.z + 1.0, 2.0));
+    vec2 reflectionCoord = r.xy / m + 0.5f;
+    reflectionCoord.y = -reflectionCoord.y;
+
+    vec4 envColor = texture(u_Texture1, reflectionCoord);
+
+    inputColor.rgb = u_Material.reflectivity * envColor.rgb + (1.0f - u_Material.reflectivity) * inputColor.rgb;
+  }
 
   // TODO: Material alhpa
 
@@ -110,7 +131,11 @@ void main() {
   // vec4 diffuseColor = fs_Col;
   vec4 diffuseColor = texture(u_Texture, fs_UV);
 
+  vec4 ambient = vec4((diffuseColor.rgb * 0.1), diffuseColor.a) ;
+
   finalColor = calculatePointLightContribution(diffuseColor, normalize(vec3(fs_Nor)));
+
+  finalColor = finalColor + ambient;
 
   // float alpha = diffuseColor.a;
 

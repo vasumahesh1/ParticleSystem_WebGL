@@ -146,6 +146,15 @@ class ParticleSource {
   }
 
   addParticles(container: any, attractors?: any) {
+    const DEFAULT_ORIENT:vec4 = vec4.fromValues(0, 0, 0, 1);
+    const DEFAULT_SCALE:vec3 = vec3.fromValues(1, 1, 1);
+
+    const transform = mat3.fromValues(
+      1, 0, 0,
+      0, 0, -1,
+      0, 1, 0,
+    );
+
     let toAdd = Math.floor(this.countRNG.rollNative());
 
     for (var itr = 0; itr < toAdd; ++itr) {
@@ -272,7 +281,7 @@ class ParticleSystem {
   update(deltaTime: number, updateOpts = {}) {
     let currTime = Date.now();
 
-    if (this.states.length < 100) {
+    if (this.states.length < 300) {
       for(var key in this.sources) {
         let source = this.sources[key];
 
@@ -327,6 +336,12 @@ class ParticleSystem {
 
   render(renderOpts:any = {}) {
     let meshes = this.particleInstances;
+
+    let offset = renderOpts.offset || vec4.fromValues(0,0,0,0);
+    let scale = renderOpts.scale || 1;
+
+    let scaleVec = vec3.fromValues(scale, scale, scale);
+
     for (var i = this.states.length - 1; i >= 0; i--) {
       let state = this.states[i];
       let instance = meshes[state.mesh];
@@ -336,7 +351,15 @@ class ParticleSystem {
         return;
       }
 
-      instance.addInstance(state.position, state.orient, state.scale, state.color);
+      let pos = vec4.create();
+      vec4.copy(pos, state.position);
+      vec4.add(pos, pos, offset);
+      pos[3] = 1;
+
+      let stateScale = vec3.create();
+      vec3.multiply(stateScale, scaleVec, state.scale);
+
+      instance.addInstance(pos, state.orient, stateScale, state.color);
     }
   }
 }

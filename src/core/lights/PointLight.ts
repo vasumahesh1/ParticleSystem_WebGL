@@ -8,6 +8,7 @@ class PointLight {
 
   position: vec3;
   range: number;
+  contrib: number = 1;
 
   attn: vec3;
 
@@ -21,6 +22,7 @@ class PointLight {
       "specular",
       "position",
       "range",
+      "contrib",
       "attn"
     ];
 
@@ -46,6 +48,7 @@ class PointLight {
     gl.uniform4fv(uniformMap.specular, this.specular);
     gl.uniform3fv(uniformMap.position, this.position);
     gl.uniform1f(uniformMap.range, this.range);
+    gl.uniform1f(uniformMap.contrib, this.contrib);
     gl.uniform3fv(uniformMap.attn, this.attn);
   }
 }
