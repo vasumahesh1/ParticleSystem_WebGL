@@ -20,7 +20,8 @@ import PointLight from './core/lights/PointLight';
 import { Torch, BasicTorch, BasicOrbTorch, Torch2, Torch3 } from './particlesystem/Torch';
 import { ParticleSystem, ParticleSource, ParticleAttractor, ParticleRepulsor, MeshParticleSystem } from './particlesystem/ParticleSystem';
 
-let Wad = (<any>window).Wad;
+let colorGradient1 = [[0.0, [255, 255, 255]], [0.2, [252, 176, 33]], [1, [199.0, 78.0, 34.0]]];
+let colorGradient2 = [[0.0, [0, 128, 256]], [0.2, [33, 176, 252]], [1, [34.0, 78.0, 199.0]]];
 
 const DEFAULT_ORIENT:vec4 = vec4.fromValues(0, 0, 0, 1);
 const DEFAULT_SCALE:vec3 = vec3.fromValues(1, 1, 1);
@@ -114,8 +115,8 @@ function createStaticScene() {
 
   for (var i = 0; i < roomLength; i+=0.5) {
     for (var j = 0; j < roomHeight; j+=0.5) {
-      meshInstances.StoneWall.addInstance(vec4.fromValues(-roomWidth / 2.0, j + 0.25, -i - 0.5, 1), vec4.fromValues(0, 0.7071068, 0, 0.7071068), vec3.fromValues(0.5, 0.5, 0.5));
-      meshInstances.StoneWall.addInstance(vec4.fromValues(roomWidth / 2.0, j + 0.25, -i - 0.5, 1), vec4.fromValues(0, -0.7071068, 0, 0.7071068), vec3.fromValues(0.5, 0.5, 0.5));
+      meshInstances.StoneWall.addInstance(vec4.fromValues(-roomWidth / 2.0 + 0.25, j + 0.25, -i - 0.5, 1), vec4.fromValues(0, 0.7071068, 0, 0.7071068), vec3.fromValues(0.5, 0.5, 0.5));
+      meshInstances.StoneWall.addInstance(vec4.fromValues(roomWidth / 2.0 + 0.25, j + 0.25, -i - 0.5, 1), vec4.fromValues(0, -0.7071068, 0, 0.7071068), vec3.fromValues(0.5, 0.5, 0.5));
     }
 
     for (var j = -roomWidth / 2.0; j < roomWidth / 2.0; j+= 0.5) {
@@ -758,6 +759,17 @@ function main() {
 
     for (var itr = 0; itr < sceneLights.length; ++itr) {
       sceneLights[itr].contrib = average;
+    }
+
+    let colorGrad = colorGradient1;
+
+    if (average > 1.1) {
+      colorGrad = colorGradient2;
+    }
+
+    for (var itr = 0; itr < activeSystems['BasicFlame'].sources.length; ++itr) {
+      let source = activeSystems['BasicFlame'].sources[itr];
+      source.colorGradient = colorGrad;
     }
   }
 
