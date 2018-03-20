@@ -3,9 +3,31 @@
     "position": [0, 0, -7],
     "orient": [0, 0, 0, 1],
     "impl": "BasicTorch",
+    "instance": "Torch1"
+  }, {
+    "position": [-2, 0, -7],
+    "orient": [0, 0, 0, 1],
+    "impl": "Torch2",
+    "instance": "Torch2"
+  }, {
+    "position": [-2, 0, -5],
+    "orient": [0, 0, 0, 1],
+    "impl": "Torch2",
+    "instance": "Torch2"
+  }, {
+    "position": [-2, 0, -3],
+    "orient": [0, 0, 0, 1],
+    "impl": "Torch2",
+    "instance": "Torch2"
+  }, {
+    "position": [5, 0, -7],
+    "orient": [0, 0, 0, 1],
+    "impl": "BasicOrbTorch",
     "instance": "Torch1",
     "options": {
-
+      "source": {
+        
+      }
     }
   }]
 }

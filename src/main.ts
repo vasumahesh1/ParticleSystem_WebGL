@@ -17,7 +17,11 @@ import { ShaderControls, WaterControls } from './rendering/gl/ShaderControls';
 import ShaderProgram, { Shader } from './rendering/gl/ShaderProgram';
 import AssetLibrary from './core/utils/AssetLibrary';
 import PointLight from './core/lights/PointLight';
-import { Torch, BasicTorch } from './particlesystem/Torch';
+import { Torch, BasicTorch, BasicOrbTorch, Torch2 } from './particlesystem/Torch';
+import { ParticleSystem, ParticleSource, ParticleAttractor, ParticleRepulsor, MeshParticleSystem } from './particlesystem/ParticleSystem';
+
+const DEFAULT_ORIENT:vec4 = vec4.fromValues(0, 0, 0, 1);
+const DEFAULT_SCALE:vec3 = vec3.fromValues(1, 1, 1);
 
 var sceneComponents = require('./config/scene_comps.json');
 var particleComponents = require('./config/particle_comps.json');
@@ -40,8 +44,12 @@ let controls = {
 };
 
 let torchImpl: any = {
-  BasicTorch: BasicTorch
+  BasicTorch: BasicTorch,
+  BasicOrbTorch: BasicOrbTorch,
+  Torch2: Torch2
 };
+
+let meshSystem:MeshParticleSystem;
 
 const SM_VIEWPORT_TRANSFORM:mat4 = mat4.fromValues(
   0.5, 0.0, 0.0, 0.0,
@@ -110,10 +118,11 @@ function createStaticScene() {
    for (var itr = 0; itr < sceneTorches.data.length; ++itr) {
      let torchData = sceneTorches.data[itr];
      let constructor = torchImpl[torchData["impl"]];
+     let opts = torchData["options"] || {};
 
      let pos = vec4.fromValues(torchData.position[0], torchData.position[1], torchData.position[2], 1);
      let orient = vec4.fromValues(torchData.orient[0], torchData.orient[1], torchData.orient[2], torchData.orient[3]);
-     let torch = new constructor(pos, orient);
+     let torch = new constructor(pos, orient, meshInstances, particleInstances, opts);
      torch.system.particleInstances = particleInstances;
 
      meshInstances[torchData.instance].addInstance(pos, orient, vec3.fromValues(1,1,1));
@@ -124,6 +133,45 @@ function createStaticScene() {
 
      torches.push(torch);
    }
+}
+
+function initMeshParticleSystem(meshInstance: MeshInstanced) {
+
+  meshSystem = new MeshParticleSystem();
+
+  let instancePos = vec4.fromValues(0,2,-7,1);
+
+  meshInstance.addInstance(instancePos, DEFAULT_ORIENT, DEFAULT_SCALE);
+
+  let position = vec4.fromValues(0, 0, -7, 0);
+
+  meshSystem.particleInstances = particleInstances;
+
+  let sourceOpts:any = {
+    ttl: 3000,
+    spawnDuration: 4000
+  };
+
+  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0] + 2, position[1], position[2], 1), sourceOpts));
+  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0] - 2, position[1], position[2], 1), sourceOpts));
+  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1], position[2] + 2, 1), sourceOpts));
+  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1], position[2] - 2, 1), sourceOpts));
+
+  let vertices = meshInstance.rawMesh.vertices;
+  let vertexCount = vertices.length;
+
+  for (var itr = 0; itr < vertexCount; itr+= 3) {
+    let vertPos = vec4.fromValues(vertices[itr] * meshInstance.baseScale[0],
+        vertices[itr + 1] * meshInstance.baseScale[1],
+        vertices[itr + 2] * meshInstance.baseScale[2],
+        0.0);
+
+    vec4.add(vertPos, instancePos, vertPos);
+
+    meshSystem.attractors.push(new ParticleAttractor(vertPos));
+  }
+
+  // meshSystem.create();
 }
 
 /**
@@ -194,6 +242,10 @@ function loadAssets(callback?: any) {
           meshInstances[comp.name].uvOffset = vec2.fromValues(comp.uvOffset[0] * uvScale, comp.uvOffset[1] * uvScale);
         }
 
+        if (comp.baseScale) {
+          meshInstances[comp.name].baseScale = vec3.fromValues(comp.baseScale[0], comp.baseScale[1], comp.baseScale[2]);
+        }
+
         meshInstances[comp.name].uvScale = uvScale;
       }
 
@@ -203,6 +255,8 @@ function loadAssets(callback?: any) {
         particleInstances[comp.name].rawMesh = assetLibrary.meshes[comp.name];
         particleInstances[comp.name].baseScale = vec3.fromValues(comp.baseScale[0], comp.baseScale[1], comp.baseScale[2]);
       }
+
+      initMeshParticleSystem(meshInstances.TargetMesh1);
 
       createStaticScene();
       // meshInstances["Wahoo"].addInstance(vec4.fromValues(0,5.0,0,1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1));
@@ -534,6 +588,9 @@ function main() {
       torch.render({});
     }
 
+    // meshSystem.update(deltaTime, {});
+    // meshSystem.render({});
+
     // particleInstances.Particle1.addInstance(vec4.fromValues(0,3,-7, 1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1), vec4.fromValues(1,0,0,1));
 
     for(let key in particleInstances) {
@@ -553,7 +610,7 @@ function main() {
       return;
     }
 
-    let deltaTime = (new Date()).getTime() - prevTime;
+    let deltaTime = Date.now() - prevTime;
 
     let rotDelta = mat4.create();
 
@@ -624,7 +681,7 @@ function main() {
       shouldCapture = false;
     }
 
-    prevTime = (new Date()).getTime();
+    prevTime = Date.now();
 
     // Tell the browser to call `tick` again whenever it renders a new frame
     requestAnimationFrame(tick);
