@@ -1,111 +1,138 @@
 import { vec3, vec4 } from 'gl-matrix';
 import PointLight from '../core/lights/PointLight';
-import { ParticleSystem, ParticleSource, ParticleAttractor, ParticleRepulsor } from './ParticleSystem';
+import Material from '../core/material/Material';
 const DEFAULT_ORIENT = vec4.fromValues(0, 0, 0, 1);
 const DEFAULT_SCALE = vec3.fromValues(1, 1, 1);
+function arrayToVec4(arr) {
+    return vec4.fromValues(arr[0], arr[1], arr[2], arr[3]);
+}
+function arrayToVec3(arr) {
+    return vec3.fromValues(arr[0], arr[1], arr[2]);
+}
 class Torch {
-    constructor(position, orient, options = {}) {
+    constructor(position, orient, activeSystems, options = {}) {
         this.position = position;
         this.orient = orient;
         this.lights = new Array();
-        let sysOpts = options.system ? options.system : {};
-        this.system = new ParticleSystem(sysOpts);
+        this.activeSystems = activeSystems;
     }
     update(deltaTime, updateOpts = {}) {
-        this.system.update(deltaTime, updateOpts);
     }
     render(renderOpts = {}) {
-        this.system.render(renderOpts);
+        this.activeSystems['BasicFlame'].render({
+            offset: this.position
+        });
+    }
+    setLighting(config = {}) {
+        let light = new PointLight();
+        light.ambient = vec4.fromValues(0.2, 0.2, 0.2, 1);
+        light.diffuse = config.diffuse ? arrayToVec4(config.diffuse) : vec4.fromValues(15, 15, 15, 1);
+        light.specular = config.specular ? arrayToVec4(config.specular) : vec4.fromValues(5.0, 5.0, 5.0, 1);
+        light.position = vec3.fromValues(this.position[0], this.position[1] + 0.4, this.position[2]);
+        light.range = config.range || 5;
+        light.attn = config.attn ? arrayToVec3(config.attn) : vec3.fromValues(1, 1, 10);
+        this.lights.push(light);
     }
 }
 class BasicTorch extends Torch {
-    constructor(position, orient, meshInstances, particleInstances, options = {}) {
-        super(position, orient, options);
-        let light = new PointLight();
-        light.ambient = vec4.fromValues(0.2, 0.2, 0.2, 1);
-        light.diffuse = vec4.fromValues(15, 15, 15, 1);
-        light.specular = vec4.fromValues(5.0, 5.0, 5.0, 1);
-        light.position = vec3.fromValues(position[0], position[1] + 0.4, position[2]);
-        light.range = 5;
-        light.attn = vec3.fromValues(1, 1, 10);
-        this.lights.push(light);
-        this.system.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1] + 0.4, position[2], 1)));
-        this.system.attractors.push(new ParticleAttractor(vec4.fromValues(position[0], position[1] + 1.1, position[2], 1)));
+    constructor(position, orient, activeSystems, options = {}) {
+        super(position, orient, activeSystems, options);
+        this.setLighting(options.lighting);
     }
 }
 class Torch2 extends Torch {
-    constructor(position, orient, meshInstances, particleInstances, options = {}) {
-        super(position, orient, options);
+    constructor(position, orient, activeSystems, options = {}) {
+        super(position, orient, activeSystems, options);
         let sourceOpts = options.source || {};
         let subSourceOpts = options.subSource || {};
-        let light = new PointLight();
-        light.ambient = vec4.fromValues(0.2, 0.2, 0.2, 1);
-        light.diffuse = vec4.fromValues(15, 15, 15, 1);
-        light.specular = vec4.fromValues(5.0, 5.0, 5.0, 1);
-        light.position = vec3.fromValues(position[0], position[1] + 0.4, position[2]);
-        light.range = 5;
-        light.attn = vec3.fromValues(1, 1, 10);
-        this.lights.push(light);
-        this.systems = new Array();
-        // Main
-        let system = new ParticleSystem();
-        system.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1] + 0.4, position[2], 1), sourceOpts));
-        system.attractors.push(new ParticleAttractor(vec4.fromValues(position[0], position[1] + 1.1, position[2], 1)));
-        system.particleInstances = particleInstances;
-        this.systems.push(system);
-        // Sub
-        system = new ParticleSystem();
-        system.sources.push(new ParticleSource(vec4.fromValues(position[0] + 0.09, position[1] + 0.35, position[2], 1), subSourceOpts));
-        system.attractors.push(new ParticleAttractor(vec4.fromValues(position[0] + 0.09, position[1] + 0.8, position[2], 1)));
-        system.particleInstances = particleInstances;
-        this.systems.push(system);
-        system = new ParticleSystem();
-        system.sources.push(new ParticleSource(vec4.fromValues(position[0] - 0.09, position[1] + 0.35, position[2], 1), subSourceOpts));
-        system.attractors.push(new ParticleAttractor(vec4.fromValues(position[0] - 0.09, position[1] + 0.8, position[2], 1)));
-        system.particleInstances = particleInstances;
-        this.systems.push(system);
-        system = new ParticleSystem();
-        system.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1] + 0.35, position[2] + 0.09, 1), subSourceOpts));
-        system.attractors.push(new ParticleAttractor(vec4.fromValues(position[0], position[1] + 0.8, position[2] + 0.09, 1)));
-        system.particleInstances = particleInstances;
-        this.systems.push(system);
-        system = new ParticleSystem();
-        system.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1] + 0.35, position[2] - 0.09, 1), subSourceOpts));
-        system.attractors.push(new ParticleAttractor(vec4.fromValues(position[0], position[1] + 0.8, position[2] - 0.09, 1)));
-        system.particleInstances = particleInstances;
-        this.systems.push(system);
+        this.setLighting(options.lighting);
     }
-    update(deltaTime, updateOpts = {}) {
-        for (var itr = 0; itr < this.systems.length; ++itr) {
-            this.systems[itr].update(deltaTime, updateOpts);
-        }
-    }
+    // update(deltaTime: number, updateOpts:any = {}) {
+    //   for (var itr = 0; itr < this.systems.length; ++itr) {
+    //     this.systems[itr].update(deltaTime, updateOpts);
+    //   }
+    // }
     render(renderOpts = {}) {
-        for (var itr = 0; itr < this.systems.length; ++itr) {
-            this.systems[itr].render(renderOpts);
-        }
+        this.activeSystems['BasicFlame'].render({
+            offset: this.position
+        });
+        let offset1 = vec4.fromValues(0.085, -0.06, 0, 0);
+        vec4.add(offset1, this.position, offset1);
+        this.activeSystems['BasicFlame'].render({
+            offset: offset1,
+            scale: 0.5
+        });
+        let offset2 = vec4.fromValues(-0.085, -0.06, 0, 0);
+        vec4.add(offset2, this.position, offset2);
+        this.activeSystems['BasicFlame'].render({
+            offset: offset2,
+            scale: 0.5
+        });
+        let offset3 = vec4.fromValues(0, -0.06, 0.085, 0);
+        vec4.add(offset3, this.position, offset3);
+        this.activeSystems['BasicFlame'].render({
+            offset: offset3,
+            scale: 0.5
+        });
+        let offset4 = vec4.fromValues(0, -0.06, -0.085, 0);
+        vec4.add(offset4, this.position, offset4);
+        this.activeSystems['BasicFlame'].render({
+            offset: offset4,
+            scale: 0.5
+        });
     }
 }
 class BasicOrbTorch extends Torch {
-    constructor(position, orient, meshInstances, particleInstances, options = {}) {
-        super(position, orient, options);
+    constructor(position, orient, activeSystems, options = {}) {
+        super(position, orient, activeSystems, options);
         let orb = options.orb || {};
         let sourceOpts = options.source || {};
-        let orbDisplacement = orb.displacement || 0.6;
-        let light = new PointLight();
-        light.ambient = vec4.fromValues(0.2, 0.2, 0.2, 1);
-        light.diffuse = vec4.fromValues(15, 15, 15, 1);
-        light.specular = vec4.fromValues(5.0, 5.0, 5.0, 1);
-        light.position = vec3.fromValues(position[0], position[1] + 0.4, position[2]);
-        light.range = 5;
-        light.attn = vec3.fromValues(1, 1, 10);
-        this.lights.push(light);
-        meshInstances.Orb1.addInstance(vec4.fromValues(position[0], position[1] + orbDisplacement, position[2], 1), DEFAULT_ORIENT, DEFAULT_SCALE);
-        this.system.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1] + 0.4, position[2], 1), sourceOpts));
-        this.system.attractors.push(new ParticleAttractor(vec4.fromValues(position[0], position[1] + 1.1, position[2], 1)));
-        this.system.repulsors.push(new ParticleRepulsor(vec4.fromValues(position[0], position[1] + orbDisplacement, position[2], 1)));
+        this.setLighting(options.lighting);
+        let orbDisplacement = 0.6;
+        options.meshInstances.Orb1.addInstance(vec4.fromValues(this.position[0], this.position[1] + orbDisplacement, this.position[2], 1), DEFAULT_ORIENT, DEFAULT_SCALE);
+        let mat = new Material();
+        mat.diffuse = options.material ? arrayToVec4(options.material.diffuse) : mat.diffuse;
+        mat.specular = options.material ? arrayToVec4(options.material.specular) : mat.specular;
+        mat.reflectivity = options.material ? options.material.reflectivity : mat.reflectivity;
+        mat.matId = options.material ? options.material.matId : mat.matId;
+        options.meshInstances.Orb1.material = mat;
+    }
+    render(renderOpts = {}) {
+        this.activeSystems['OrbFlame'].render({
+            offset: this.position
+        });
+    }
+}
+class Torch3 extends Torch {
+    constructor(position, orient, activeSystems, options = {}) {
+        super(position, orient, activeSystems, options);
+        let sourceOpts = options.source || {};
+        let subSourceOpts = options.subSource || {};
+        this.setLighting(options.lighting);
+    }
+    // update(deltaTime: number, updateOpts:any = {}) {
+    //   for (var itr = 0; itr < this.systems.length; ++itr) {
+    //     this.systems[itr].update(deltaTime, updateOpts);
+    //   }
+    // }
+    render(renderOpts = {}) {
+        this.activeSystems['BasicFlame'].render({
+            offset: this.position
+        });
+        let offset3 = vec4.fromValues(0, -0.06, 0.085, 0);
+        vec4.add(offset3, this.position, offset3);
+        this.activeSystems['BasicFlame'].render({
+            offset: offset3,
+            scale: 0.5
+        });
+        let offset4 = vec4.fromValues(0, -0.06, -0.085, 0);
+        vec4.add(offset4, this.position, offset4);
+        this.activeSystems['BasicFlame'].render({
+            offset: offset4,
+            scale: 0.5
+        });
     }
 }
 export default Torch;
-export { Torch, BasicTorch, BasicOrbTorch, Torch2 };
+export { Torch, BasicTorch, BasicOrbTorch, Torch2, Torch3 };
 //# sourceMappingURL=Torch.js.map

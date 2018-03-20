@@ -47,6 +47,19 @@ class Camera {
     mat4.perspective(this.projectionMatrix, this.fovy, this.aspectRatio, this.near, this.far);
   }
 
+  getInvViewProj() {
+    let invProj = mat4.create();
+    let invView = mat4.create();
+
+    mat4.invert(invProj, this.projectionMatrix);
+    mat4.invert(invView, this.viewMatrix);
+
+    let invViewProj = mat4.create();    
+    mat4.multiply(invViewProj, invView, invProj);
+
+    return invViewProj;
+  }
+
   update() {
     this.controls.tick();
 

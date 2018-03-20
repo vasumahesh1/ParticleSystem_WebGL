@@ -1,6 +1,7 @@
 import { mat4, vec3 } from 'gl-matrix';
 import { gl } from '../../globals';
 import PointLight from '../../core/lights/PointLight';
+import Material from '../../core/material/Material';
 var activeProgram = null;
 function concatFloat32Array(first, second) {
     var firstLength = first.length;
@@ -60,9 +61,12 @@ class ShaderProgram {
         this.unifSMLightViewport = gl.getUniformLocation(this.prog, "u_LightViewportMatrix");
         this.unifShadowTexture = gl.getUniformLocation(this.prog, "u_ShadowTexture");
         this.unifGlobalTransform = gl.getUniformLocation(this.prog, "u_GlobalTransform");
+        this.unifMaterial = gl.getUniformLocation(this.prog, "u_Material");
         this.unifNumPointLights = gl.getUniformLocation(this.prog, "u_NumPointLights");
         this.unifPointLights = new Array();
+        this.unifMaterialLocations = {};
         PointLight.markLocations(this.prog, this.unifPointLights, MAX_POINT_LIGHTS, "u_PointLights");
+        Material.markLocations(this.prog, this.unifMaterialLocations, "u_Material");
     }
     use() {
         if (activeProgram !== this.prog) {
@@ -149,6 +153,12 @@ class ShaderProgram {
                 let light = lights[itr];
                 light.setPointLightData(this.unifPointLights[itr]);
             }
+        }
+    }
+    setMaterial(material) {
+        this.use();
+        if (this.unifMaterial !== -1) {
+            material.setMaterialData(this.unifMaterialLocations);
         }
     }
     /**

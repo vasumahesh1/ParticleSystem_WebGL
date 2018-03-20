@@ -154,27 +154,27 @@ function createStaticScene() {
    }
 }
 
+let meshSourceOpts:any = {
+    ttl: 3000,
+    spawnDuration: 4000
+  };
+
 function initMeshParticleSystem(meshInstance: MeshInstanced) {
 
   meshSystem = new MeshParticleSystem();
 
-  let instancePos = vec4.fromValues(0,2,-7,1);
+  let instancePos = vec4.fromValues(0.5, 2, -7, 1);
 
-  meshInstance.addInstance(instancePos, DEFAULT_ORIENT, DEFAULT_SCALE);
+  // meshInstance.addInstance(instancePos, DEFAULT_ORIENT, DEFAULT_SCALE);
 
   let position = vec4.fromValues(0, 0, -7, 0);
 
   meshSystem.particleInstances = particleInstances;
 
-  let sourceOpts:any = {
-    ttl: 3000,
-    spawnDuration: 4000
-  };
-
-  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0] + 2, position[1], position[2], 1), sourceOpts));
-  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0] - 2, position[1], position[2], 1), sourceOpts));
-  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1], position[2] + 2, 1), sourceOpts));
-  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1], position[2] - 2, 1), sourceOpts));
+  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0] + 2, position[1], position[2], 1), meshSourceOpts));
+  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0] - 2, position[1], position[2], 1), meshSourceOpts));
+  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1], position[2] + 2, 1), meshSourceOpts));
+  meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1], position[2] - 2, 1), meshSourceOpts));
 
   let vertices = meshInstance.rawMesh.vertices;
   let vertexCount = vertices.length;
@@ -512,6 +512,126 @@ function createShadowMapFrameBuffer(gl: WebGL2RenderingContext, frameRefs: any) 
     frameRefs.frameTexture = frameTexture;
 }
 
+
+// https://stackoverflow.com/questions/42309715/how-to-correctly-pass-mouse-coordinates-to-webgl
+function getRelativeMousePosition(event: any, target: any) {
+  target = target || event.target;
+  var rect = target.getBoundingClientRect();
+
+  return {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top,
+  }
+}
+
+// assumes target or event.target is canvas
+function getNoPaddingNoBorderCanvasRelativeMousePosition(event: any, target: any) {
+  target = target || event.target;
+  var pos = getRelativeMousePosition(event, target);
+
+  pos.x = pos.x * target.width  / target.clientWidth;
+  pos.y = pos.y * target.height / target.clientHeight;
+
+  return pos;  
+}
+
+let camera: Camera;
+
+let clipSpaceCoord: any;
+
+window.addEventListener('mousemove', e =>{
+  const canvas = <HTMLCanvasElement>document.getElementById('canvas');
+  const pos = getNoPaddingNoBorderCanvasRelativeMousePosition(e, canvas);
+
+  // pos is in pixel coordinates for the canvas.
+  // so convert to WebGL clip space coordinates
+  const x = pos.x / canvas.width  *  2 - 1;
+  const y = pos.y / canvas.height * -2 + 1;
+
+  clipSpaceCoord = {};
+  clipSpaceCoord.x = x;
+  clipSpaceCoord.y = y;
+});
+
+window.addEventListener('keydown', e => {
+  let isAttractor = e.key.toUpperCase() == 'A';
+  let isRepulsor = e.key.toUpperCase() == 'S';
+  let isSource = e.key.toUpperCase() == 'D';
+
+  if (!isAttractor && !isRepulsor && !isSource) {
+    return;
+  }
+
+  console.log(clipSpaceCoord);
+
+  let ndcX = clipSpaceCoord.x;
+  let ndcY = clipSpaceCoord.y;
+
+  let ndc = vec4.fromValues(ndcX, ndcY, 1.0, 1.0);
+
+  let invCamera = camera.getInvViewProj();
+
+  vec4.scale(ndc, ndc, camera.far);
+
+  let worldPoint = vec4.create();
+  vec4.transformMat4(worldPoint, ndc, invCamera);
+
+  let rayOrigin = camera.getPosition();
+  let rayDir = vec4.create();
+  vec4.sub(rayDir, worldPoint, vec4.fromValues(rayOrigin[0], rayOrigin[1], rayOrigin[2], 1));
+
+  let rayDirection = vec3.fromValues(rayDir[0], rayDir[1], rayDir[2]);
+  vec3.normalize(rayDirection, rayDirection);
+
+  let t = 10;
+
+  vec3.scale(rayDirection, rayDirection, t);
+  let finalPosition = vec3.create();
+  vec3.add(finalPosition, rayOrigin, rayDirection);
+
+  console.log('World: ', finalPosition);
+
+  if (isSource) {
+    meshSystem.sources.push(new ParticleSource(vec4.fromValues(finalPosition[0], finalPosition[1], finalPosition[2], 1), meshSourceOpts));
+  }
+  else if (isAttractor) {
+    let finalVec4 = vec4.fromValues(finalPosition[0], finalPosition[1], finalPosition[2], 1);
+    for (var idx = 0; idx < meshSystem.states.length; ++idx) {
+      let state = meshSystem.states[idx];
+
+      let distVec = vec4.create();
+      vec4.sub(distVec, finalVec4, state.position);
+
+      if (vec4.length(distVec) < 2) {
+        let speed = 10;
+        let distVec3 = vec3.fromValues(distVec[0], distVec[1], distVec[2]);
+        vec3.normalize(distVec3, distVec3);
+        vec3.scale(distVec3, distVec3, speed);
+
+        state.velocity = vec4.fromValues(distVec3[0], distVec3[1], distVec3[2], 0);
+      }
+    }
+  }
+  else if (isRepulsor) {
+    let finalVec4 = vec4.fromValues(finalPosition[0], finalPosition[1], finalPosition[2], 1);
+    for (var idx = 0; idx < meshSystem.states.length; ++idx) {
+      let state = meshSystem.states[idx];
+
+      let distVec = vec4.create();
+      vec4.sub(distVec, state.position, finalVec4);
+
+      if (vec4.length(distVec) < 2) {
+        let speed = 10;
+        let distVec3 = vec3.fromValues(distVec[0], distVec[1], distVec[2]);
+        vec3.normalize(distVec3, distVec3);
+        vec3.scale(distVec3, distVec3, speed);
+
+        state.velocity = vec4.fromValues(distVec3[0], distVec3[1], distVec3[2], 0);
+      }
+    }
+  }
+});
+
 /**
  * @brief      Main execution code
  *
@@ -543,7 +663,7 @@ function main() {
 
   // Initial call to load scene
 
-  const camera = new Camera(vec3.fromValues(0.5, 10, -25), vec3.fromValues(0.5, 3, -10));
+  camera = new Camera(vec3.fromValues(0.5, 10, -25), vec3.fromValues(0.5, 3, -10));
 
   const renderer = new OpenGLRenderer(canvas);
   renderer.setClearColor(0.0, 0.0, 0.0, 1);
@@ -607,8 +727,8 @@ function main() {
       torch.render({});
     }
 
-    // meshSystem.update(deltaTime, {});
-    // meshSystem.render({});
+    meshSystem.update(deltaTime, {});
+    meshSystem.render({});
 
     // particleInstances.Particle1.addInstance(vec4.fromValues(0,3,-7, 1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1), vec4.fromValues(1,0,0,1));
 

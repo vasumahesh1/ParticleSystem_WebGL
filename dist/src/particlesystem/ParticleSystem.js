@@ -174,7 +174,7 @@ class ParticleSystem {
     }
     update(deltaTime, updateOpts = {}) {
         let currTime = Date.now();
-        if (this.states.length < 100) {
+        if (this.states.length < 300) {
             for (var key in this.sources) {
                 let source = this.sources[key];
                 // if (currTime - source.lastSpawn > source.spawnDuration) {
@@ -215,6 +215,9 @@ class ParticleSystem {
     }
     render(renderOpts = {}) {
         let meshes = this.particleInstances;
+        let offset = renderOpts.offset || vec4.fromValues(0, 0, 0, 0);
+        let scale = renderOpts.scale || 1;
+        let scaleVec = vec3.fromValues(scale, scale, scale);
         for (var i = this.states.length - 1; i >= 0; i--) {
             let state = this.states[i];
             let instance = meshes[state.mesh];
@@ -222,7 +225,13 @@ class ParticleSystem {
                 logError(`Cannot Find Mesh: ${state.mesh} in Meshes`);
                 return;
             }
-            instance.addInstance(state.position, state.orient, state.scale, state.color);
+            let pos = vec4.create();
+            vec4.copy(pos, state.position);
+            vec4.add(pos, pos, offset);
+            pos[3] = 1;
+            let stateScale = vec3.create();
+            vec3.multiply(stateScale, scaleVec, state.scale);
+            instance.addInstance(pos, state.orient, stateScale, state.color);
         }
     }
 }
