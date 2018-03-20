@@ -45,7 +45,7 @@ Use your Mouse and Keyboard keys to change the scene.
 
 `A` : Adds a temporary attractive force to move particles to where your mouse is.
 
-`S` : Adds a temporary repulsive force to move particles to where your mouse is.
+`S` : Adds a temporary repulsive force to move particles away from your mouse.
 
 `D` : Adds a source for emitting particles for the TargetMesh (The mesh to which the particles get attracted to) in the scene.
 
