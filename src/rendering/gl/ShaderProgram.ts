@@ -1,4 +1,4 @@
-import { vec4, mat4, vec2, vec3 } from 'gl-matrix';
+import { vec4, mat4, vec2, vec3, mat3 } from 'gl-matrix';
 import Drawable from './Drawable';
 import { gl } from '../../globals';
 import { ShaderControls, WaterControls } from './ShaderControls';
@@ -77,6 +77,7 @@ class ShaderProgram {
   unifControlsElevation: WebGLUniformLocation;
   unifControlsNoiseScale: WebGLUniformLocation;
   unifGlobalTransform: WebGLUniformLocation;
+  unifCameraAxes: WebGLUniformLocation;
 
   unifPointLights: Array<any>;
 
@@ -114,6 +115,7 @@ class ShaderProgram {
     this.unifInstanceModel = gl.getUniformLocation(this.prog, "u_InstanceModel");
     this.unifInstanceModelInvTranspose = gl.getUniformLocation(this.prog, "u_InstanceModelInvTranspose");
     this.unifLightPos = gl.getUniformLocation(this.prog, "u_LightPos");
+    this.unifCameraAxes = gl.getUniformLocation(this.prog, "u_CameraAxes");
     
 
     this.unifSMLightSpace = gl.getUniformLocation(this.prog, "u_LightSpaceMatrix");
@@ -390,6 +392,13 @@ class ShaderProgram {
       let color = vec3.fromValues(controls.sandColor[0], controls.sandColor[1], controls.sandColor[2]);
       vec3.scale(color, color, 1 / 255.0);
       gl.uniform3fv(this.unifControlsSandColor, color);
+    }
+  }
+
+  setCameraAxes(axes: mat3) {
+    this.use();
+    if (this.unifCameraAxes !== -1) {
+      gl.uniformMatrix3fv(this.unifCameraAxes, false, axes);
     }
   }
 

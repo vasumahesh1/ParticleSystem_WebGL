@@ -25,6 +25,12 @@ class RNG {
         logTrace('RNG Rolled', val);
         return val;
     }
+    rollNative() {
+        let noise = Math.random();
+        let val = (noise * (this.max - this.min)) + this.min;
+        logTrace('RNG Rolled', val);
+        return val;
+    }
 }
 export default RNG;
 //# sourceMappingURL=RNG.js.map

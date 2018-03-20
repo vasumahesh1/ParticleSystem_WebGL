@@ -1,7 +1,7 @@
 import { vec2, vec3, vec4, mat4 } from 'gl-matrix';
 import { gl } from '../globals';
 import PointLight from '../core/lights/PointLight';
-import { ParticleSystem, ParticleSource } from './ParticleSystem'
+import { ParticleSystem, ParticleSource, ParticleAttractor } from './ParticleSystem'
 
 class Torch {
   position: vec4;
@@ -43,6 +43,7 @@ class BasicTorch extends Torch {
     this.lights.push(light);
 
     this.system.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1] + 0.4, position[2], 1)));
+    this.system.attractors.push(new ParticleAttractor(vec4.fromValues(position[0], position[1] + 1.1, position[2], 1)))
   }
 }
 

@@ -23,11 +23,11 @@ class BasicTorch extends Torch {
         light.ambient = vec4.fromValues(0.2, 0.2, 0.2, 1);
         light.diffuse = vec4.fromValues(15, 15, 15, 1);
         light.specular = vec4.fromValues(5.0, 5.0, 5.0, 1);
-        light.position = vec3.fromValues(position[0], position[1] + 0.75, position[2]);
+        light.position = vec3.fromValues(position[0], position[1] + 0.4, position[2]);
         light.range = 5;
         light.attn = vec3.fromValues(1, 1, 10);
         this.lights.push(light);
-        this.system.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1] + 0.75, position[2], 1)));
+        this.system.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1] + 0.4, position[2], 1)));
     }
 }
 export default Torch;

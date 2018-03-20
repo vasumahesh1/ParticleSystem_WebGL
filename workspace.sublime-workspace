@@ -3,10 +3,269 @@
 	{
 		"selected_items":
 		[
+			[
+				"verte",
+				"vertexPosition"
+			],
+			[
+				"p",
+				"position\tproperty"
+			],
+			[
+				"ve",
+				"vec3\talias"
+			],
+			[
+				"Par",
+				"particleInstances\tlet"
+			],
+			[
+				"del",
+				"deltaTime\tparameter"
+			],
+			[
+				"log",
+				"logTrace\tvar"
+			],
+			[
+				"bufI",
+				"bufInstanceColor\tproperty"
+			],
+			[
+				"torc",
+				"torches\tlet"
+			],
+			[
+				"for",
+				"for\tfor (…) {…}"
+			],
+			[
+				"parti",
+				"particleInstances\tlet"
+			],
+			[
+				"part",
+				"particleInstances\tlet"
+			],
+			[
+				"roll",
+				"rollNative\tmethod"
+			],
+			[
+				"Part",
+				"ParticleState\tclass"
+			],
+			[
+				"torch",
+				"torchData\tlet"
+			],
+			[
+				"uniform4f",
+				"uniform4fv\tmethod"
+			],
+			[
+				"diff",
+				"diffuseColor"
+			],
+			[
+				"from",
+				"fromValues\tmethod"
+			],
+			[
+				"Poin",
+				"PointLight\talias"
+			],
+			[
+				"uniform1",
+				"uniform1f\tmethod"
+			],
+			[
+				"func",
+				"function\tkeyword"
+			]
 		]
 	},
 	"buffers":
 	[
+		{
+			"file": "src/main.ts",
+			"settings":
+			{
+				"buffer_size": 20669,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/geometry/MeshInstanced.ts",
+			"settings":
+			{
+				"buffer_size": 7656,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/rendering/gl/OpenGLRenderer.ts",
+			"settings":
+			{
+				"buffer_size": 2168,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/Camera.ts",
+			"settings":
+			{
+				"buffer_size": 2330,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/shaders/particle-frag.glsl",
+			"settings":
+			{
+				"buffer_size": 253,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/shaders/particle-vert.glsl",
+			"settings":
+			{
+				"buffer_size": 2580,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/config/particle_comps.json",
+			"settings":
+			{
+				"buffer_size": 129,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/config/scene_comps.json",
+			"settings":
+			{
+				"buffer_size": 721,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/config/torches.json",
+			"settings":
+			{
+				"buffer_size": 153,
+				"encoding": "UTF-8",
+				"line_ending": "Windows",
+				"name": "{"
+			}
+		},
+		{
+			"file": "src/particlesystem/Torch.ts",
+			"settings":
+			{
+				"buffer_size": 1440,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "src/particlesystem/ParticleSystem.ts",
+			"settings":
+			{
+				"buffer_size": 5322,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "src/core/rng/RNG.ts",
+			"settings":
+			{
+				"buffer_size": 1158,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/core/rng/WeightedRNG.ts",
+			"settings":
+			{
+				"buffer_size": 1375,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/core/lights/PointLight.ts",
+			"settings":
+			{
+				"buffer_size": 1273,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "src/rendering/gl/Drawable.ts",
+			"settings":
+			{
+				"buffer_size": 3669,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/shaders/regular-frag.glsl",
+			"settings":
+			{
+				"buffer_size": 3911,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "index.html",
+			"settings":
+			{
+				"buffer_size": 391,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/rendering/gl/Texture.ts",
+			"settings":
+			{
+				"buffer_size": 3139,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/objs/SquarePlane.obj",
+			"settings":
+			{
+				"buffer_size": 497,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/P/ubuntu/PeepSim/.gitignore",
+			"settings":
+			{
+				"buffer_size": 542,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -15,10 +274,14 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 375.0,
-		"last_filter": "",
+		"height": 86.0,
+		"last_filter": "Instak",
 		"selected_items":
 		[
+			[
+				"Instak",
+				"Package Control: Install Package"
+			],
 			[
 				"Insta",
 				"Package Control: Install Package"
@@ -28,7 +291,7 @@
 				"Package Control: Install Package"
 			]
 		],
-		"width": 410.0
+		"width": 442.0
 	},
 	"console":
 	{
@@ -49,11 +312,34 @@
 	},
 	"expanded_folders":
 	[
-		"/P/[CG]WebGL/ParticleSystem_WebGL"
+		"/P/[CG]WebGL/ParticleSystem_WebGL",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/config",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/core",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/core/ds",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/core/lights",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/core/lsystem",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/core/rng",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/rendering",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/rendering/gl",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/shaders"
 	],
 	"file_history":
 	[
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/shaders/particle-vert.glsl",
+		"/D/Chrome/homework-6-particle-system-vasumahesh1-master/src/shaders/particle-vert.glsl",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/rendering/gl/ShaderProgram.ts",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/rendering/gl/OpenGLRenderer.ts",
+		"/D/Chrome/homework-6-particle-system-vasumahesh1-master/src/Camera.ts",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/Camera.ts",
+		"/D/Chrome/homework-6-particle-system-vasumahesh1-master/src/rendering/gl/ShaderProgram.ts",
+		"/D/Chrome/homework-6-particle-system-vasumahesh1-master/src/rendering/gl/OpenGLRenderer.ts",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/rendering/gl/ShaderControls.ts",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/config/scene_comps.json",
+		"/P/[GAME]Engine/tools/test/files/test_config.cfg",
 		"/P/[CG]WebGL/ParticleSystem_WebGL/src/objs/Torch1.obj",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/objs/Torch2.mtl",
+		"/P/[CG]WebGL/ParticleSystem_WebGL/src/objs/SquarePlane.obj",
 		"/P/[DESIGN]Maya/ParticleSystem/objs/Torch1.mtl",
 		"/P/[GAME]Engine/tools/src/common.h",
 		"/P/[GAME]Engine/azura_v2_backup/Azura/stdafx.h",
@@ -83,7 +369,7 @@
 	],
 	"find":
 	{
-		"height": 23.0
+		"height": 36.0
 	},
 	"find_in_files":
 	{
@@ -97,6 +383,104 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"05",
+			"modelposition",
+			"camera",
+			"vs_Pos",
+			"u_CameraAxes",
+			"unifCameraAxes",
+			"velocity",
+			"rng",
+			"config",
+			"particleRNG",
+			"75",
+			"attrInstanceColor",
+			"meshInstances",
+			".create",
+			"uvOffset",
+			"uvScale",
+			"meshInstances",
+			"particleInstances",
+			"u_Model",
+			"vec3",
+			";\n",
+			"logTrace",
+			"mainShader",
+			"custom",
+			"renderScene",
+			"0.4",
+			"lastSpawn",
+			"startColor",
+			"attrInstanceScale",
+			"attrInstanceRotation",
+			"attrInstanceColor",
+			"orient",
+			"main",
+			"meshInstances",
+			"sceneComponents",
+			"torchImpl",
+			"WeightedRNG",
+			"spawnDuration",
+			"ttl",
+			"position",
+			"mainAtlas",
+			"vt",
+			"0.086815",
+			"\n0.086815",
+			".create",
+			"instance",
+			"create",
+			"uvOffset",
+			"0.0",
+			"sceneTorches",
+			"position",
+			"torchImpl",
+			"this",
+			"testLight",
+			"position",
+			"PointLight",
+			"05f",
+			"05",
+			"0.0",
+			"10",
+			"09",
+			"02",
+			"01",
+			"0.0",
+			"01",
+			"0.2",
+			"0.8",
+			"0.0",
+			"0.5",
+			"05",
+			"0.2",
+			"uniformMatrix4fv",
+			"diffuseFactor",
+			"float4",
+			"unifNumPointLights",
+			"this",
+			"locations",
+			"ambient",
+			"ll",
+			"jj",
+			": ",
+			"float4",
+			"0.0",
+			"05",
+			"10.0f",
+			"10",
+			"FOG_NIGHT_COLOR",
+			"996000",
+			"004000",
+			"0,0,0,1",
+			"999000",
+			"980000",
+			"020000",
+			"200000",
+			"000000",
+			"980000",
+			"45",
+			"baseSc"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -120,8 +504,642 @@
 	"groups":
 	[
 		{
+			"selected": 2,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "src/main.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 20669,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								20536,
+								20536
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 9067.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/geometry/MeshInstanced.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7656,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1573,
+								1573
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 484.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/rendering/gl/OpenGLRenderer.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2168,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								857,
+								857
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 180.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/Camera.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2330,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								687,
+								695
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 135.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "src/shaders/particle-frag.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 253,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								165,
+								165
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/OpenGL Shading Language (GLSL)/GLSL.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "src/shaders/particle-vert.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2580,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2239,
+								2239
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/OpenGL Shading Language (GLSL)/GLSL.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 675.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "src/config/particle_comps.json",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 129,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								129,
+								129
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"typescript_plugin_format_options":
+							{
+								"convertTabsToSpaces": true,
+								"indentSize": 2,
+								"tabSize": 2
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "src/config/scene_comps.json",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 721,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 12,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "src/config/torches.json",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 153,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								36,
+								36
+							]
+						],
+						"settings":
+						{
+							"auto_name": "{",
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 11,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "src/particlesystem/Torch.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1440,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1235,
+								1235
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "src/particlesystem/ParticleSystem.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5322,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4819,
+								4819
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"typescript_plugin_format_options":
+							{
+								"convertTabsToSpaces": true,
+								"indentSize": 2,
+								"tabSize": 2
+							},
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1800.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "src/core/rng/RNG.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1158,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								967,
+								977
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 45.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": "src/core/rng/WeightedRNG.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1375,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1230,
+								1230
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 13,
+					"type": "text"
+				},
+				{
+					"buffer": 13,
+					"file": "src/core/lights/PointLight.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1273,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								159,
+								159
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"typescript_plugin_format_options":
+							{
+								"convertTabsToSpaces": true,
+								"indentSize": 2,
+								"tabSize": 2
+							},
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "src/rendering/gl/Drawable.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3669,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								118,
+								127
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 15,
+					"type": "text"
+				},
+				{
+					"buffer": 15,
+					"file": "src/shaders/regular-frag.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3911,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								374,
+								374
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/OpenGL Shading Language (GLSL)/GLSL.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 14,
+					"type": "text"
+				},
+				{
+					"buffer": 16,
+					"file": "index.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 391,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								391,
+								391
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"typescript_plugin_format_options":
+							{
+								"convertTabsToSpaces": true,
+								"indentSize": 2,
+								"tabSize": 2
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 18,
+					"type": "text"
+				},
+				{
+					"buffer": 17,
+					"file": "src/rendering/gl/Texture.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3139,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2284,
+								2297
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 315.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 19,
+					"type": "text"
+				},
+				{
+					"buffer": 18,
+					"file": "src/objs/SquarePlane.obj",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 497,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								286,
+								286
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"typescript_plugin_format_options":
+							{
+								"convertTabsToSpaces": true,
+								"indentSize": 2,
+								"tabSize": 2
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 16,
+					"type": "text"
+				},
+				{
+					"buffer": 19,
+					"file": "/P/ubuntu/PeepSim/.gitignore",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 542,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								326,
+								326
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 17,
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -156,6 +1174,14 @@
 		]
 	},
 	"menu_visible": true,
+	"output.doc":
+	{
+		"height": 0.0
+	},
+	"output.exec":
+	{
+		"height": 100.0
+	},
 	"output.find_results":
 	{
 		"height": 0.0

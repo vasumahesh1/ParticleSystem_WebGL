@@ -55,6 +55,7 @@ class ShaderProgram {
         this.unifInstanceModel = gl.getUniformLocation(this.prog, "u_InstanceModel");
         this.unifInstanceModelInvTranspose = gl.getUniformLocation(this.prog, "u_InstanceModelInvTranspose");
         this.unifLightPos = gl.getUniformLocation(this.prog, "u_LightPos");
+        this.unifCameraAxes = gl.getUniformLocation(this.prog, "u_CameraAxes");
         this.unifSMLightSpace = gl.getUniformLocation(this.prog, "u_LightSpaceMatrix");
         this.unifSMLightViewport = gl.getUniformLocation(this.prog, "u_LightViewportMatrix");
         this.unifShadowTexture = gl.getUniformLocation(this.prog, "u_ShadowTexture");
@@ -290,6 +291,12 @@ class ShaderProgram {
             let color = vec3.fromValues(controls.sandColor[0], controls.sandColor[1], controls.sandColor[2]);
             vec3.scale(color, color, 1 / 255.0);
             gl.uniform3fv(this.unifControlsSandColor, color);
+        }
+    }
+    setCameraAxes(axes) {
+        this.use();
+        if (this.unifCameraAxes !== -1) {
+            gl.uniformMatrix3fv(this.unifCameraAxes, false, axes);
         }
     }
     /**

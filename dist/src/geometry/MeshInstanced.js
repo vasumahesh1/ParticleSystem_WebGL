@@ -30,6 +30,7 @@ class MeshInstanced extends Drawable {
         super();
         this.instanced = true;
         this.name = n;
+        this.uvScale = 1;
         this.instances = 0;
         this.baseColor = vec4.fromValues(1, 1, 1, 1);
         this.baseScale = vec3.fromValues(1, 1, 1);
@@ -46,6 +47,36 @@ class MeshInstanced extends Drawable {
         this.colors = new Float32Array([]);
         this.uvs = new Float32Array([]);
         this.indices = new Uint32Array([]);
+    }
+    clearInstanceBuffers() {
+        this.instancePosition = new Array();
+        this.instanceScale = new Array();
+        this.instanceRotation = new Array();
+        this.instanceColor = new Array();
+        this.instances = 0;
+        gl.deleteBuffer(this.bufInstancePosition);
+        gl.deleteBuffer(this.bufInstanceRotation);
+        gl.deleteBuffer(this.bufInstanceScale);
+        gl.deleteBuffer(this.bufInstanceColor);
+    }
+    createInstanceBuffers() {
+        this.positions = new Float32Array(this.instancePosition);
+        this.rotations = new Float32Array(this.instanceRotation);
+        this.scales = new Float32Array(this.instanceScale);
+        this.colors = new Float32Array(this.instanceColor);
+        this.generateInstancePos();
+        this.generateInstanceRotation();
+        this.generateInstanceScale();
+        this.generateInstanceColor();
+        this.count = this.indices.length;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstancePosition);
+        gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceRotation);
+        gl.bufferData(gl.ARRAY_BUFFER, this.rotations, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceScale);
+        gl.bufferData(gl.ARRAY_BUFFER, this.scales, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceColor);
+        gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
     }
     load(url) {
         let ref = this;
@@ -135,10 +166,10 @@ class MeshInstanced extends Drawable {
         gl.bufferData(gl.ARRAY_BUFFER, this.rotations, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceScale);
         gl.bufferData(gl.ARRAY_BUFFER, this.scales, gl.STATIC_DRAW);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufVert);
-        gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.bufInstanceColor);
         gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufVert);
+        gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.bufUv);
         gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
         dCreateInfo(`Created ${this.name} with ${this.instances} Instances`);

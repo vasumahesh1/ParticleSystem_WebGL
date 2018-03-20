@@ -11,6 +11,7 @@ uniform mat4 u_GlobalTransform;
 uniform int u_Time;
 uniform vec3 u_LightPos;
 uniform vec4 u_Eye;
+uniform mat3 u_CameraAxes;
 
 /*----------  Shader UI Controls  ----------*/
 uniform vec3 u_ControlsWaterBedrock1Color;
@@ -76,6 +77,8 @@ void main() {
 
   // mat3 invTranspose = inverse(mat3(instanceModel));
   fs_Nor = normalize(vertexNormal); // vec4(invTranspose * vec3(vertexNormal), 0);
+
+  vertexPosition = vec4(vertexPosition.x * u_CameraAxes[0] + vertexPosition.y * u_CameraAxes[1], 1);
 
   vec4 modelposition = u_Model * vertexPosition;
   modelposition = vertexScale * vertexPosition;

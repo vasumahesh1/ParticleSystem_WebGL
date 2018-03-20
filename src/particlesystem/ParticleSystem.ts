@@ -20,6 +20,10 @@ function degreeToRad(deg: number) {
   return deg * 0.0174533;
 }
 
+function lerp(val1: number, val2: number, alpha: number) {
+  return ((1.0 - alpha) * val1) + (alpha * val2);
+}
+
 class ParticleState {
   position: vec4;
   orient: vec4;
@@ -28,14 +32,52 @@ class ParticleState {
 
   velocity: vec4;
   ttl: number;
+  lifetime: number;
   mesh: string;
+
+  sourcePosition: vec4;
+  colorGradient: any;
 
   constructor(position:vec4, orient:vec4, scale:vec3, ttl: number) {
     this.position = position;
     this.orient = orient;
     this.scale = scale;
     this.ttl = ttl;
+    this.lifetime = ttl;
     this.mesh = 'Particle1';
+  }
+
+  updateColor() {
+    let value = 1.0 - (this.ttl / this.lifetime);
+
+    let idx = -1;
+
+    for (var itr = 0; itr < this.colorGradient.length; ++itr) {
+      let set = this.colorGradient[itr];
+      if(value <= set[0]) {
+        idx = itr;
+        break;
+      }
+    }
+
+    if (idx > 0) {
+      let min = this.colorGradient[idx - 1][0];
+      let max = this.colorGradient[idx][0];
+
+      let minValue = this.colorGradient[idx - 1][1];
+      let maxValue = this.colorGradient[idx][1];
+
+      let lerpAmount = (value - min) / (max - min);
+
+      this.color = vec4.fromValues(
+        lerp(minValue[0] / 255, maxValue[0] / 255, lerpAmount),
+        lerp(minValue[1] / 255, maxValue[1] / 255, lerpAmount),
+        lerp(minValue[2] / 255, maxValue[2] / 255, lerpAmount),
+        1.0
+      );
+    }
+
+    this.scale = vec3.fromValues(1 - value, 1 - value, 1 - value);
   }
 }
 
@@ -48,22 +90,24 @@ class ParticleSource {
   startColor: vec4;
   endColor: vec4;
 
+  colorGradient: any;
+
   coneAngle: number;
 
   velocityRNG: RNG;
-  velocityJitterStr: number;
 
   countRNG: RNG;
+  ttlRNG: RNG;
 
   constructor(position:vec4, options:any = {}) {
     this.position = position;
     this.lastSpawn = 0;
     this.coneAngle = options.coneAngle ? degreeToRad(options.coneAngle / 2) : degreeToRad(60 / 2);
 
-    this.spawnDuration = options.spawnDuration || 300;
-    this.ttl = options.ttl || 750;
+    this.spawnDuration = options.spawnDuration || 100;
+    this.ttl = options.ttl || 500;
     this.startColor = options.startColor ?
-      vec4.fromValues(options.startColor[0], options.startColor[1], options.startColor[2], options.startColor[3]) : vec4.fromValues(1, 0, 0, 1);
+      vec4.fromValues(options.startColor[0], options.startColor[1], options.startColor[2], options.startColor[3]) : vec4.fromValues(1, 1, 1, 1);
 
     this.endColor = options.endColor ?
       vec4.fromValues(options.endColor[0], options.endColor[1], options.endColor[2], options.endColor[3]) : vec4.fromValues(1, 1, 1, 1);
@@ -82,12 +126,10 @@ class ParticleSource {
 
     if (options.velocity) {
       let config = options.velocity;
-      this.velocityJitterStr = config.jitter;
       this.velocityRNG = new RNG(config.rng.seed, config.rng.min, config.rng.max);
     }
     else {
       this.velocityRNG = new RNG(3412, 400, 1500);
-      this.velocityJitterStr = 0.05;
     }
 
     if (options.count) {
@@ -95,8 +137,11 @@ class ParticleSource {
       this.countRNG = new RNG(config.rng.seed, config.rng.min, config.rng.max);
     }
     else {
-      this.countRNG = new RNG(3412, 5, 10);
+      this.countRNG = new RNG(3412, 200, 500);
     }
+
+    this.ttlRNG = new RNG(97, -200, 200);
+    this.colorGradient = options.colorGradient || [[0.0, [255, 255, 255]], [0.2, [252, 176, 33]], [1, [199.0, 78.0, 34.0]]];
   }
 
   addParticles(container: any) {
@@ -106,19 +151,23 @@ class ParticleSource {
       let mesh = this.particleRNG.rollNative();
       
       let particlePos = vec4.create();
+      let particlePosCopy = vec4.create();
       vec4.copy(particlePos, this.position);
+      vec4.copy(particlePosCopy, this.position);
 
-      let state = new ParticleState(particlePos, DEFAULT_ORIENT, DEFAULT_SCALE, this.ttl);
+      let ttl = this.ttlRNG.rollNative() + this.ttl;
+
+      let state = new ParticleState(particlePos, DEFAULT_ORIENT, DEFAULT_SCALE, ttl);
       state.mesh = mesh;
+      state.sourcePosition = particlePosCopy;
       state.color = this.startColor;
+      state.colorGradient = this.colorGradient;
       let speed = this.velocityRNG.rollNative() / 1000;
 
       let z = Math.random() * (1 - Math.cos(this.coneAngle)) + Math.cos(this.coneAngle);
       let phi = Math.random() * 2.0 * Math.PI;
       let x = Math.sqrt(1 - (z * z)) * Math.cos(phi);
       let y = Math.sqrt(1 - (z * z)) * Math.sin(phi);
-
-      
 
       let direction = vec3.fromValues(x, y, z);
 
@@ -133,14 +182,51 @@ class ParticleSource {
   }
 }
 
+class ParticleAttractor {
+  position: vec4;
+  positionVec3: vec3;
+  magnitude: number;
+
+  constructor(position: vec4) {
+    this.magnitude = 0.5;
+    this.position =  position;
+    this.positionVec3 = vec3.fromValues(position[0], position[1], position[2]);
+  }
+
+  compute(state: ParticleState, deltaTime: number) {
+    // let attrDirection = vec4.create();
+    // let attrDirectionVec3 = vec3.create();
+    // vec4.sub(attrDirection, this.position, state.sourcePosition);
+    // vec3.normalize(attrDirectionVec3, vec3.fromValues(attrDirection[0], attrDirection[1], attrDirection[2]));
+    // vec3.scale(attrDirectionVec3, attrDirectionVec3, this.magnitude);
+    // vec4.add(state.velocity, state.velocity, vec4.fromValues(attrDirectionVec3[0], attrDirectionVec3[1], attrDirectionVec3[2], 0));
+
+    let statePos = vec3.fromValues(state.velocity[0], state.velocity[1], state.velocity[2]);
+    let diff = vec4.create();
+    vec4.sub(diff, this.position, state.position);
+    let diffVec3 = vec3.create();
+    vec3.normalize(diffVec3, vec3.fromValues(diff[0], diff[1], diff[2]));
+
+    let normal = vec3.create();
+    vec3.cross(normal, statePos, diffVec3);
+    vec3.normalize(normal, normal);
+
+    let transform = mat4.create();
+    mat4.fromRotation(transform, degreeToRad(5) * this.magnitude, normal);
+    vec4.transformMat4(state.velocity, state.velocity, transform);
+  }
+}
+
 class ParticleSystem {
   states: Array<ParticleState>;
   sources: Array<ParticleSource>;
+  attractors: Array<ParticleAttractor>;
   particleInstances: any;
 
   constructor(options:any = {}) {
     this.states = new Array<ParticleState>();
     this.sources = new Array<ParticleSource>();
+    this.attractors = new Array<ParticleAttractor>();
   }
 
   update(deltaTime: number, updateOpts = {}) {
@@ -157,7 +243,6 @@ class ParticleSystem {
 
     for (var i = this.states.length - 1; i >= 0; i--) {
       let state = this.states[i];
-      // state.position[1] +=   0.05;
 
       let vel = vec4.create();
       vec4.copy(vel, state.velocity);
@@ -169,6 +254,13 @@ class ParticleSystem {
       vec4.add(pos, pos, vel);
 
       state.position = pos;
+
+      state.updateColor();
+
+      for (var j = 0; j < this.attractors.length; ++j) {
+        let attr = this.attractors[j];
+        attr.compute(state, deltaTime);
+      }
     }
 
     for (var i = this.states.length - 1; i >= 0; i--) {
@@ -199,4 +291,4 @@ class ParticleSystem {
 
 export default ParticleSystem;
 
-export { ParticleSystem, ParticleSource, ParticleState };
+export { ParticleSystem, ParticleSource, ParticleState, ParticleAttractor };

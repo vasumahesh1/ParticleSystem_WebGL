@@ -40,6 +40,7 @@ let shaderControls;
 let mainAtlas;
 let assetLibrary;
 let mainShader; // Instanced
+let particleShader; // Instanced
 let regularShader; // Not Instanced
 let skyShader;
 let visualShader;
@@ -152,6 +153,9 @@ function loadAssets(callback) {
         logTrace('Loaded MeshInstances are:', meshInstances);
         for (let key in meshInstances) {
             meshInstances[key].create();
+        }
+        for (let key in particleInstances) {
+            particleInstances[key].create();
         }
         boundingLines.create();
         FlagIsRenderable = true;
@@ -352,13 +356,17 @@ function main() {
     // Later, we can import `gl` from `globals.ts` to access it
     setGL(gl);
     // Initial call to load scene
-    const camera = new Camera(vec3.fromValues(0.5, 3, -2), vec3.fromValues(0.5, 3, -10));
+    const camera = new Camera(vec3.fromValues(0.5, 10, -25), vec3.fromValues(0.5, 3, -10));
     const renderer = new OpenGLRenderer(canvas);
     renderer.setClearColor(0.0, 0.0, 0.0, 1);
     gl.enable(gl.DEPTH_TEST);
     mainShader = new ShaderProgram([
         new Shader(gl.VERTEX_SHADER, require('./shaders/custom-vert.glsl')),
         new Shader(gl.FRAGMENT_SHADER, require('./shaders/custom-frag.glsl')),
+    ]);
+    particleShader = new ShaderProgram([
+        new Shader(gl.VERTEX_SHADER, require('./shaders/particle-vert.glsl')),
+        new Shader(gl.FRAGMENT_SHADER, require('./shaders/particle-frag.glsl')),
     ]);
     regularShader = new ShaderProgram([
         new Shader(gl.VERTEX_SHADER, require('./shaders/regular-vert.glsl')),
@@ -380,11 +388,31 @@ function main() {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     let shadowMapBuffer = {};
     createShadowMapFrameBuffer(gl, shadowMapBuffer);
-    function renderScene(instanceShader, regularShader) {
+    function renderScene(instanceShader, particleShader, regularShader, deltaTime) {
         // renderer.render(camera, regularShader, [plane]);
         for (let key in meshInstances) {
             let mesh = meshInstances[key];
             renderer.render(camera, instanceShader, [mesh]);
+        }
+        for (var key in particleInstances) {
+            let instance = particleInstances[key];
+            instance.clearInstanceBuffers();
+        }
+        for (var itr = 0; itr < torches.length; ++itr) {
+            let torch = torches[itr];
+            torch.update(deltaTime, {});
+        }
+        for (var itr = 0; itr < torches.length; ++itr) {
+            let torch = torches[itr];
+            torch.render({});
+        }
+        // particleInstances.Particle1.addInstance(vec4.fromValues(0,3,-7, 1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1), vec4.fromValues(1,0,0,1));
+        for (let key in particleInstances) {
+            particleInstances[key].createInstanceBuffers();
+        }
+        for (let key in particleInstances) {
+            let mesh = particleInstances[key];
+            renderer.render(camera, particleShader, [mesh]);
         }
     }
     // This function will be called every frame
@@ -394,14 +422,6 @@ function main() {
             return;
         }
         let deltaTime = (new Date()).getTime() - prevTime;
-        for (var itr = 0; itr < torches.length; ++itr) {
-            let torch = torches[itr];
-            torch.update(deltaTime, {});
-        }
-        for (var itr = 0; itr < torches.length; ++itr) {
-            let torch = torches[itr];
-            torch.render({});
-        }
         let rotDelta = mat4.create();
         let lightDir = controls.lightDirection;
         let lightDirection = vec3.fromValues(lightDir[0], lightDir[1], lightDir[2]);
@@ -426,20 +446,24 @@ function main() {
         // gl.enable(gl.DEPTH_TEST);
         mainShader.setTime(frameCount);
         mainShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
+        particleShader.setTime(frameCount);
+        particleShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
         visualShader.setTime(frameCount);
         visualShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
         regularShader.setEyePosition(vec4.fromValues(position[0], position[1], position[2], 1));
         mainShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
         regularShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
+        particleShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
         mainShader.setPointLights(sceneLights);
         // mainShader.setShadowTexture(1);
         // regularShader.setShadowTexture(1);
         // gl.activeTexture(gl.TEXTURE1);
         // gl.bindTexture(gl.TEXTURE_2D, shadowMapBuffer.frameTexture);
         mainShader.setTexture(0);
+        particleShader.setTexture(0);
         regularShader.setTexture(0);
         mainAtlas.bind(0);
-        renderScene(mainShader, regularShader);
+        renderScene(mainShader, particleShader, regularShader, deltaTime);
         frameCount++;
         stats.end();
         if (shouldCapture) {
