@@ -90,3 +90,13 @@ I tried to build a dungeon with torches emitting fire particles. Guess it turned
 The profiler says that the main issue is the VBO creation for the Particles. There were a couple of other design choices I thought, but couldn't do it in time.
 
 So, ideally the initial couple of minutes will run fine, then for some reason it starts to lag and FPS might drop a bit.
+
+## Improving Performance:
+
+One way I see to improve performance is to use web workers which will parallelize the simulation. Also a better vbo for particles where I don't recreate the instanced position and just merely edit them, but this has to account for the TTL of dead particles etc.
+
+## References:
+
+- [BDcraft Minecraft Textures](bdcraft.net)
+- [Audio Visualization](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Visualizations_with_Web_Audio_API)
+- [Gem Mesh](https://free3d.com/3d-model/colored-diamonds-84118.html)
