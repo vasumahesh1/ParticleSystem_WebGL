@@ -174,7 +174,7 @@ class ParticleSystem {
     }
     update(deltaTime, updateOpts = {}) {
         let currTime = Date.now();
-        if (this.states.length < 300) {
+        if (this.states.length < 10) {
             for (var key in this.sources) {
                 let source = this.sources[key];
                 // if (currTime - source.lastSpawn > source.spawnDuration) {

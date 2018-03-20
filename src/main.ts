@@ -20,6 +20,8 @@ import PointLight from './core/lights/PointLight';
 import { Torch, BasicTorch, BasicOrbTorch, Torch2, Torch3 } from './particlesystem/Torch';
 import { ParticleSystem, ParticleSource, ParticleAttractor, ParticleRepulsor, MeshParticleSystem } from './particlesystem/ParticleSystem';
 
+let Wad = (<any>window).Wad;
+
 const DEFAULT_ORIENT:vec4 = vec4.fromValues(0, 0, 0, 1);
 const DEFAULT_SCALE:vec3 = vec3.fromValues(1, 1, 1);
 
@@ -555,10 +557,11 @@ window.addEventListener('mousemove', e =>{
 
 window.addEventListener('keydown', e => {
   let isAttractor = e.key.toUpperCase() == 'A';
+  let isMeshAttractor = e.key.toUpperCase() == 'F';
   let isRepulsor = e.key.toUpperCase() == 'S';
   let isSource = e.key.toUpperCase() == 'D';
 
-  if (!isAttractor && !isRepulsor && !isSource) {
+  if (!isAttractor && !isRepulsor && !isSource && !isMeshAttractor) {
     return;
   }
 
@@ -630,6 +633,23 @@ window.addEventListener('keydown', e => {
       }
     }
   }
+  else if (isMeshAttractor) {
+    let finalVec4 = vec4.fromValues(finalPosition[0], finalPosition[1], finalPosition[2], 1);
+    let meshInstance = meshInstances.TargetMesh2;
+    let vertices = meshInstance.rawMesh.vertices;
+    let vertexCount = vertices.length;
+
+    for (var itr = 0; itr < vertexCount; itr+= 3) {
+      let vertPos = vec4.fromValues(vertices[itr] * meshInstance.baseScale[0],
+          vertices[itr + 1] * meshInstance.baseScale[1],
+          vertices[itr + 2] * meshInstance.baseScale[2],
+          0.0);
+
+      vec4.add(vertPos, finalVec4, vertPos);
+
+      meshSystem.attractors.push(new ParticleAttractor(vertPos));
+    }
+  }
 });
 
 /**
@@ -653,10 +673,29 @@ function main() {
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement>document.getElementById('canvas');
   const gl = <WebGL2RenderingContext>canvas.getContext('webgl2');
- 
+
   if (!gl) {
     alert('WebGL 2 not supported!');
   }
+
+  var audioCtx = new ((<any>window).AudioContext || (<any>window).webkitAudioContext)();
+  var audio:any = document.getElementById('custom_audio');
+  var audioSrc = audioCtx.createMediaElementSource(audio);
+  var analyser = audioCtx.createAnalyser();
+  // we have to connect the MediaElementSource with the analyser 
+  audioSrc.connect(analyser);
+  audioSrc.connect(audioCtx.destination);
+  var frequencyData = new Uint8Array(analyser.frequencyBinCount);
+
+  audio.play();
+
+  // var track = new Wad({source : './src/music/audio.mp3'});
+  // var tuner = new Wad.Poly();
+  // tuner.add(track);
+  // track.play();
+
+  // tuner.updatePitch();
+
   // `setGL` is a function imported above which sets the value of `gl` in the `globals.ts` module.
   // Later, we can import `gl` from `globals.ts` to access it
   setGL(gl);
@@ -705,6 +744,22 @@ function main() {
   let shadowMapBuffer:any = {};
 
   createShadowMapFrameBuffer(gl, shadowMapBuffer);
+
+  function processAudio() {
+    analyser.getByteFrequencyData(frequencyData);
+
+    let average = 0;
+
+    for(var i = 0; i < frequencyData.length; i++) {
+      average += frequencyData[i] / 128.0;
+    }
+
+    average = average / 70;
+
+    for (var itr = 0; itr < sceneLights.length; ++itr) {
+      sceneLights[itr].contrib = average;
+    }
+  }
 
   function renderScene (instanceShader: ShaderProgram, particleShader: ShaderProgram, regularShader: ShaderProgram, deltaTime:number) {
     // renderer.render(camera, regularShader, [plane]);
@@ -759,6 +814,8 @@ function main() {
     camera.update();
     let position = camera.getPosition();
     stats.begin();
+
+    processAudio();
 
     /*----------  Render Shadow Map into Buffer  ----------*/
     // gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMapBuffer.frameBuffer);

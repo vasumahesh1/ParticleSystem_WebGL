@@ -13,6 +13,7 @@ import ShaderProgram, { Shader } from './rendering/gl/ShaderProgram';
 import AssetLibrary from './core/utils/AssetLibrary';
 import { BasicTorch, BasicOrbTorch, Torch2, Torch3 } from './particlesystem/Torch';
 import { ParticleSystem, ParticleSource, ParticleAttractor, ParticleRepulsor, MeshParticleSystem } from './particlesystem/ParticleSystem';
+let Wad = window.Wad;
 const DEFAULT_ORIENT = vec4.fromValues(0, 0, 0, 1);
 const DEFAULT_SCALE = vec3.fromValues(1, 1, 1);
 var sceneComponents = require('./config/scene_comps.json');
@@ -110,20 +111,20 @@ function createStaticScene() {
         torches.push(torch);
     }
 }
+let meshSourceOpts = {
+    ttl: 3000,
+    spawnDuration: 4000
+};
 function initMeshParticleSystem(meshInstance) {
     meshSystem = new MeshParticleSystem();
-    let instancePos = vec4.fromValues(0, 2, -7, 1);
-    meshInstance.addInstance(instancePos, DEFAULT_ORIENT, DEFAULT_SCALE);
+    let instancePos = vec4.fromValues(0.5, 2, -7, 1);
+    // meshInstance.addInstance(instancePos, DEFAULT_ORIENT, DEFAULT_SCALE);
     let position = vec4.fromValues(0, 0, -7, 0);
     meshSystem.particleInstances = particleInstances;
-    let sourceOpts = {
-        ttl: 3000,
-        spawnDuration: 4000
-    };
-    meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0] + 2, position[1], position[2], 1), sourceOpts));
-    meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0] - 2, position[1], position[2], 1), sourceOpts));
-    meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1], position[2] + 2, 1), sourceOpts));
-    meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1], position[2] - 2, 1), sourceOpts));
+    meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0] + 2, position[1], position[2], 1), meshSourceOpts));
+    meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0] - 2, position[1], position[2], 1), meshSourceOpts));
+    meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1], position[2] + 2, 1), meshSourceOpts));
+    meshSystem.sources.push(new ParticleSource(vec4.fromValues(position[0], position[1], position[2] - 2, 1), meshSourceOpts));
     let vertices = meshInstance.rawMesh.vertices;
     let vertexCount = vertices.length;
     for (var itr = 0; itr < vertexCount; itr += 3) {
@@ -400,6 +401,7 @@ function getNoPaddingNoBorderCanvasRelativeMousePosition(event, target) {
     pos.y = pos.y * target.height / target.clientHeight;
     return pos;
 }
+let camera;
 let clipSpaceCoord;
 window.addEventListener('mousemove', e => {
     const canvas = document.getElementById('canvas');
@@ -408,14 +410,80 @@ window.addEventListener('mousemove', e => {
     // so convert to WebGL clip space coordinates
     const x = pos.x / canvas.width * 2 - 1;
     const y = pos.y / canvas.height * -2 + 1;
+    clipSpaceCoord = {};
+    clipSpaceCoord.x = x;
+    clipSpaceCoord.y = y;
 });
 window.addEventListener('keydown', e => {
     let isAttractor = e.key.toUpperCase() == 'A';
+    let isMeshAttractor = e.key.toUpperCase() == 'F';
     let isRepulsor = e.key.toUpperCase() == 'S';
-    if (!isAttractor && !isRepulsor) {
+    let isSource = e.key.toUpperCase() == 'D';
+    if (!isAttractor && !isRepulsor && !isSource && !isMeshAttractor) {
         return;
     }
     console.log(clipSpaceCoord);
+    let ndcX = clipSpaceCoord.x;
+    let ndcY = clipSpaceCoord.y;
+    let ndc = vec4.fromValues(ndcX, ndcY, 1.0, 1.0);
+    let invCamera = camera.getInvViewProj();
+    vec4.scale(ndc, ndc, camera.far);
+    let worldPoint = vec4.create();
+    vec4.transformMat4(worldPoint, ndc, invCamera);
+    let rayOrigin = camera.getPosition();
+    let rayDir = vec4.create();
+    vec4.sub(rayDir, worldPoint, vec4.fromValues(rayOrigin[0], rayOrigin[1], rayOrigin[2], 1));
+    let rayDirection = vec3.fromValues(rayDir[0], rayDir[1], rayDir[2]);
+    vec3.normalize(rayDirection, rayDirection);
+    let t = 10;
+    vec3.scale(rayDirection, rayDirection, t);
+    let finalPosition = vec3.create();
+    vec3.add(finalPosition, rayOrigin, rayDirection);
+    console.log('World: ', finalPosition);
+    if (isSource) {
+        meshSystem.sources.push(new ParticleSource(vec4.fromValues(finalPosition[0], finalPosition[1], finalPosition[2], 1), meshSourceOpts));
+    }
+    else if (isAttractor) {
+        let finalVec4 = vec4.fromValues(finalPosition[0], finalPosition[1], finalPosition[2], 1);
+        for (var idx = 0; idx < meshSystem.states.length; ++idx) {
+            let state = meshSystem.states[idx];
+            let distVec = vec4.create();
+            vec4.sub(distVec, finalVec4, state.position);
+            if (vec4.length(distVec) < 2) {
+                let speed = 10;
+                let distVec3 = vec3.fromValues(distVec[0], distVec[1], distVec[2]);
+                vec3.normalize(distVec3, distVec3);
+                vec3.scale(distVec3, distVec3, speed);
+                state.velocity = vec4.fromValues(distVec3[0], distVec3[1], distVec3[2], 0);
+            }
+        }
+    }
+    else if (isRepulsor) {
+        let finalVec4 = vec4.fromValues(finalPosition[0], finalPosition[1], finalPosition[2], 1);
+        for (var idx = 0; idx < meshSystem.states.length; ++idx) {
+            let state = meshSystem.states[idx];
+            let distVec = vec4.create();
+            vec4.sub(distVec, state.position, finalVec4);
+            if (vec4.length(distVec) < 2) {
+                let speed = 10;
+                let distVec3 = vec3.fromValues(distVec[0], distVec[1], distVec[2]);
+                vec3.normalize(distVec3, distVec3);
+                vec3.scale(distVec3, distVec3, speed);
+                state.velocity = vec4.fromValues(distVec3[0], distVec3[1], distVec3[2], 0);
+            }
+        }
+    }
+    else if (isMeshAttractor) {
+        let finalVec4 = vec4.fromValues(finalPosition[0], finalPosition[1], finalPosition[2], 1);
+        let meshInstance = meshInstances.TargetMesh2;
+        let vertices = meshInstance.rawMesh.vertices;
+        let vertexCount = vertices.length;
+        for (var itr = 0; itr < vertexCount; itr += 3) {
+            let vertPos = vec4.fromValues(vertices[itr] * meshInstance.baseScale[0], vertices[itr + 1] * meshInstance.baseScale[1], vertices[itr + 2] * meshInstance.baseScale[2], 0.0);
+            vec4.add(vertPos, finalVec4, vertPos);
+            meshSystem.attractors.push(new ParticleAttractor(vertPos));
+        }
+    }
 });
 /**
  * @brief      Main execution code
@@ -438,11 +506,25 @@ function main() {
     if (!gl) {
         alert('WebGL 2 not supported!');
     }
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var audio = document.getElementById('custom_audio');
+    var audioSrc = audioCtx.createMediaElementSource(audio);
+    var analyser = audioCtx.createAnalyser();
+    // we have to connect the MediaElementSource with the analyser 
+    audioSrc.connect(analyser);
+    audioSrc.connect(audioCtx.destination);
+    var frequencyData = new Uint8Array(analyser.frequencyBinCount);
+    audio.play();
+    // var track = new Wad({source : './src/music/audio.mp3'});
+    // var tuner = new Wad.Poly();
+    // tuner.add(track);
+    // track.play();
+    // tuner.updatePitch();
     // `setGL` is a function imported above which sets the value of `gl` in the `globals.ts` module.
     // Later, we can import `gl` from `globals.ts` to access it
     setGL(gl);
     // Initial call to load scene
-    const camera = new Camera(vec3.fromValues(0.5, 10, -25), vec3.fromValues(0.5, 3, -10));
+    camera = new Camera(vec3.fromValues(0.5, 10, -25), vec3.fromValues(0.5, 3, -10));
     const renderer = new OpenGLRenderer(canvas);
     renderer.setClearColor(0.0, 0.0, 0.0, 1);
     gl.enable(gl.DEPTH_TEST);
@@ -474,6 +556,17 @@ function main() {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     let shadowMapBuffer = {};
     createShadowMapFrameBuffer(gl, shadowMapBuffer);
+    function processAudio() {
+        analyser.getByteFrequencyData(frequencyData);
+        let average = 0;
+        for (var i = 0; i < frequencyData.length; i++) {
+            average += frequencyData[i] / 128.0;
+        }
+        average = average / 70;
+        for (var itr = 0; itr < sceneLightslength; ++itr) {
+            // code...
+        }
+    }
     function renderScene(instanceShader, particleShader, regularShader, deltaTime) {
         // renderer.render(camera, regularShader, [plane]);
         for (let key in meshInstances) {
@@ -491,8 +584,8 @@ function main() {
             let torch = torches[itr];
             torch.render({});
         }
-        // meshSystem.update(deltaTime, {});
-        // meshSystem.render({});
+        meshSystem.update(deltaTime, {});
+        meshSystem.render({});
         // particleInstances.Particle1.addInstance(vec4.fromValues(0,3,-7, 1), vec4.fromValues(0,0,0,1), vec3.fromValues(1,1,1), vec4.fromValues(1,0,0,1));
         for (let key in particleInstances) {
             particleInstances[key].createInstanceBuffers();
@@ -515,6 +608,7 @@ function main() {
         camera.update();
         let position = camera.getPosition();
         stats.begin();
+        processAudio();
         /*----------  Render Shadow Map into Buffer  ----------*/
         // gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMapBuffer.frameBuffer);
         // gl.viewport(0, 0, window.innerWidth, window.innerHeight);

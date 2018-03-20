@@ -26,6 +26,7 @@
     "obj-mtl-loader": "0.0.5",
     "paralleljs": "^0.2.1",
     "stats-js": "^1.0.0-alpha1",
+    "web-audio-daw": "^2.7.3",
     "webgl-obj-loader": "^1.0.0"
   }
 }
