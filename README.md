@@ -1,7 +1,7 @@
 Project 6: Particle Systems
 =============================
 
-The Most Ugly Dungeon Ever. It has some interesting things though!
+The Most Ugliest Dungeon Ever. It has some interesting things though!
 
 ![](images/img_1.png)
 
