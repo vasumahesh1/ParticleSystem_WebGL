@@ -77,32 +77,32 @@
       }
     }
   }, {
-    "position": [4.875, 3, -5],
+    "position": [5.1, 3, -5],
     "orient": [0, 0, 0, 1],
     "impl": "Torch3",
     "instance": "Torch3"
   }, {
-    "position": [4.875, 3, -7],
+    "position": [5.1, 3, -7],
     "orient": [0, 0, 0, 1],
     "impl": "Torch3",
     "instance": "Torch3"
   }, {
-    "position": [4.875, 3, -9],
+    "position": [5.1, 3, -9],
     "orient": [0, 0, 0, 1],
     "impl": "Torch3",
     "instance": "Torch3"
   }, {
-    "position": [-4.875, 3, -9],
+    "position": [-4.65, 3, -9],
     "orient": [0, 1, 0, 0],
     "impl": "Torch3",
     "instance": "Torch3"
   }, {
-    "position": [-4.875, 3, -7],
+    "position": [-4.65, 3, -7],
     "orient": [0, 1, 0, 0],
     "impl": "Torch3",
     "instance": "Torch3"
   }, {
-    "position": [-4.875, 3, -5],
+    "position": [-4.65, 3, -5],
     "orient": [0, 1, 0, 0],
     "impl": "Torch3",
     "instance": "Torch3"
